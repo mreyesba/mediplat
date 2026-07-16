@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.top-menu {
+    orientation: horizontal;
+}
