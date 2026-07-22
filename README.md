@@ -8,6 +8,18 @@ https://nodejs.org/en/download
 
 npx vite
 
+## General architecture
+
+                  [ Universal Landing Page ]
+                     /                  \
+        [ Patient Login ]             [ Provider Login ]
+
+               |                              |
+     [ Patient Dashboard ]           [ Doctor Dashboard ]
+     - Upcoming Appointments         - Patient Queue / Schedule
+     - Care Plan & Rx Tracking       - Electronic Health Records (EHR)
+     - Secure Doctor Chat            - Patient Messaging & Telehealth
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

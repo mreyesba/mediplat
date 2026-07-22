@@ -1,13 +1,51 @@
-import './FormsPage.css'
+import './FormsPage.css';
 
-function FormsPage() {
-  return (
-    <form>
-      <label htmlFor="nombrePaciente" className="text-3xl font-bold underline">Nombre del paciente</label>
-      <input id="nombrePaciente" type="text" className="border rounded px-3 py-2" />
-      <button type="submit" className="font-bold">Enviar</button>
-    </form>
-  )
+interface FormsPageProps {
+  type: 'login' | 'signup';
 }
 
-export default FormsPage
+function FormsPage({ type }: FormsPageProps) {
+    
+    return (
+        <form className="flex flex-col gap-4 border p-4 rounded bg-white shadow-sm">
+            <div className="flex flex-col gap-1">
+            <label 
+                htmlFor="nombrePaciente" 
+                className="text-sm font-semibold text-slate-700">
+                Nombre del paciente
+            </label>
+            <input
+                id="nombrePaciente"
+                type="text"
+                className="border rounded px-3 py-2 outline-sky-500"
+                required
+            />
+            </div>
+            
+            {/* Render extra fields dynamically based on the current page type */}
+            {type === 'signup' && (
+            <div className="flex flex-col gap-1">
+                <label 
+                    htmlFor="correo" 
+                    className="text-sm font-semibold text-slate-700">
+                    Correo Electronico
+                </label>
+                <input
+                    id="correo"
+                    type="email"
+                    className="border rounded px-3 py-2 outline-sky-500"
+                    required
+                />
+            </div>
+            )}
+
+            <button 
+                type="submit" 
+                className="font-bold bg-sky-600 text-white py-2 rounded hover:bh-sky-700">
+                {type === 'login' ? 'Iniciar Sesion' : 'Registrar'}
+            </button>
+        </form>
+    );
+}
+
+export default FormsPage;
