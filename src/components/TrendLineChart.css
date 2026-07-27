@@ -1,0 +1,25 @@
+.trend-chart {
+  --surface-1: #fcfcfb;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --gridline: #e1e0d9;
+  --series-a: #2a78d6;
+  --series-b: #008300;
+}
+
+@media (prefers-color-scheme: dark) {
+  .trend-chart {
+    --surface-1: #1a1a19;
+    --text-secondary: #c3c2b7;
+    --muted: #898781;
+    --gridline: #2c2c2a;
+    --series-a: #3987e5;
+    --series-b: #008300;
+  }
+}
+
+.trend-chart {
+  background: var(--surface-1);
+  width: 100%;
+  height: 320px;
+}
