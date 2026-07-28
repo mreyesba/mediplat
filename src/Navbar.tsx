@@ -26,6 +26,10 @@ function Navbar() {
                 <Link to="/account" className="hover:text-sky-400 transition-colors">
                     Account
                 </Link>
+
+                <Link to="/dashboards" className="hover:text-sky-400 transition-colors">
+                    Dashboards
+                </Link>
             </div>
         </nav>
     );
