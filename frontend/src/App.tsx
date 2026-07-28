@@ -4,7 +4,7 @@ import Home from './Home.tsx';
 import About from './About.tsx';
 import Account from './Account.tsx';
 import Dashboards from './Dashboards.tsx';
-import FormsPage from './FormsPage';
+import FormsPage from './FormsPage.tsx';
 
 // Simple Page Components
 const NotFound = () => <h2>⚠️ 404 - Page Not Found</h2>;
