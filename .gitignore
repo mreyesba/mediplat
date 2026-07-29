@@ -31,7 +31,6 @@ dist-ssr
 
 # Local UV Environments
 .venv/
-uv.lock
 
 # Database Files
 *.db
