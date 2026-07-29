@@ -22,3 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python Workspace Cache
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local UV Environments
+.venv/
+uv.lock
+
+# Database Files
+*.db
+*.sqlite3
+
+# Node Frontend Assets
+**/node_modules/
+frontend/dist/
+.eslintcache
+.vite/
