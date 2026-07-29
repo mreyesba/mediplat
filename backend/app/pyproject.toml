@@ -8,4 +8,4 @@ dependencies = [
 ]
 
 [tool.fastapi]
-app-path = "app/main.py"
+app-path = "main.py"

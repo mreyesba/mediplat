@@ -17,7 +17,7 @@ Welcome! Follow this guide to initialize the local environment, which features a
 
 bash
 
-cd backend
+cd backend/app
  
 2. Sync the project environment and install dependencies automatically: 
 
@@ -78,11 +78,11 @@ npm run dev
 
 my-app/
 │   backend/
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── database.py   # SQLAlchemy configuration
-|   |   ├── models.py     # Database schema models
-│   │   └── main.py       # FastAPI application & entry point
-│   ├── pyproject.toml
-│   └── uv.lock
+│   └── app/
+│       ├── __init__.py
+│       ├── database.py   # SQLAlchemy configuration
+|       ├── models.py     # Database schema models
+│       │── main.py       # FastAPI application & entry point
+│       ├── pyproject.toml
+│       └── uv.lock
 └── frontend/             # Vite/React app
