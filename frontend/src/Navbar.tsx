@@ -1,6 +1,25 @@
 import { Link } from 'react-router-dom';
 
 function Navbar() {
+    const handleLogout = async () => {
+        try {
+            const response = await fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include', // CRITICAL: Permits cookie modifications
+            });
+
+            if (response.ok) {
+                alert('You have been logged out.');
+                
+                // Refresh the page or redirect to clear any lingering memory states
+                window.location.href = '/login'; 
+            } else {
+                console.error('Logout request rejected by server.');
+            }
+        } catch (err) {
+            console.error('Failed to communicate with logout pipeline:', err);
+        }
+    };
 
     return (
         <nav className="top-menu flex items-center justify-between p-4 bg-slate-900 text-white">
@@ -30,6 +49,13 @@ function Navbar() {
                 <Link to="/dashboards" className="hover:text-sky-400 transition-colors">
                     Dashboards
                 </Link>
+
+                {/* LAST OPTION: The Logout Interactive Trigger */}
+                <button 
+                    onClick={handleLogout}
+                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded border border-red-500/30 transition-all font-semibold">
+                    Log Out
+                </button>
             </div>
         </nav>
     );

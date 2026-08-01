@@ -1,4 +1,4 @@
-import FormsPage from './FormsPage';
+import Contact from './Contact';
 
 function Home() {
 
@@ -31,7 +31,7 @@ function Home() {
                     <p className="text-center text-gray-500 mb-8">
                         Leave your info and we will get in contact soon
                     </p>
-                    <FormsPage type="login" />
+                    <Contact />
                 </div>
             </section>
         </div>
