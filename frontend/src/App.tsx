@@ -14,7 +14,7 @@ function App() {
     const { user, setUser } = useAuth();
 
 	return (
-		<>
+		<div>
 			<Navbar user={user} setUser={setUser}/>
 
 			{/* Page Display Area */}
@@ -33,7 +33,7 @@ function App() {
                 {/* Catch-all route for any undefined path */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
-        </>
+        </div>
 	);
 }
 
