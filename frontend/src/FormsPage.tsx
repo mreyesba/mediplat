@@ -112,6 +112,8 @@ function FormsPage({ type }: FormsPageProps) {
                 const profileRes = await fetch('/api/me', { credentials: 'include' });
                 const profileData = await profileRes.json();
                 console.log("Logged-In Profile Context:", profileData);
+
+                window.location.reload();
             } else {
                 const err = await response.json();
                 alert(`Login failed: ${err.detail}`);
