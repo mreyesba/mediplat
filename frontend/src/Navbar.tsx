@@ -43,9 +43,11 @@ function Navbar({ user, setUser }: NavbarProps) {
                 </Link>
 
                 {/* HashLink to jump to Contact section */}
-                <a href="/#contact-section" className="hover:text-sky-400 smooth-scroll">
-                    Contact
-                </a>
+                {!user && (
+                    <a href="/#contact-section" className="hover:text-sky-400 smooth-scroll">
+                        Contact
+                    </a>
+                )}
 
                 {!user && 
                 <Link to="/account" className="hover:text-sky-400 transition-colors">
@@ -57,12 +59,14 @@ function Navbar({ user, setUser }: NavbarProps) {
                 </Link>
 
                 {/* LAST OPTION: The Logout Interactive Trigger */}
-                {user &&
-                <button 
-                    onClick={handleLogout}
-                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded border border-red-500/30 transition-all font-semibold">
-                    Log Out
-                </button>}
+                {user && (
+                    <button 
+                    onClick={handleLogout} 
+                    className="hover:text-sky-400 transition-colors font-medium text-base p-0 bg-transparent border-none cursor-pointer"
+                    >
+                        Log Out
+                    </button>
+                )}
             </div>
         </nav>
     );
