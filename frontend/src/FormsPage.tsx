@@ -1,11 +1,16 @@
 import './FormsPage.css';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 interface FormsPageProps {
   type: 'login' | 'signup';
 }
 
 function FormsPage({ type }: FormsPageProps) {
+    const { setUser } = useAuth();
+    const navigate = useNavigate();
+  
     // Global form states
 
     const [email, setEmail] = useState('');
@@ -103,17 +108,15 @@ function FormsPage({ type }: FormsPageProps) {
         
             if (response.ok) {
                 const data = await response.json();
-                alert(`Welcome back, ${data.username}! You are securely logged in.`);
-
-                setUsername('');
-                setPassword('');
-
-                // If you want to check if the cookie works, query the private /api/me path instantly:
-                const profileRes = await fetch('/api/me', { credentials: 'include' });
-                const profileData = await profileRes.json();
-                console.log("Logged-In Profile Context:", profileData);
-
-                window.location.reload();
+                
+                // 1. Sync data to the global context state matching our defined interface blueprint
+                setUser({ 
+                    username: data.username, 
+                    first_name: data.first_name || 'User' 
+                });
+                
+                // 2. JUMP TO DASHBOARD OR HOME PAGE INSTANTLY WITHOUT PAGE RELOADS
+                navigate('/home'); 
             } else {
                 const err = await response.json();
                 alert(`Login failed: ${err.detail}`);
