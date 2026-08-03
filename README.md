@@ -59,30 +59,9 @@ npm run dev
 
   * **Development Web Port UI:** [http://localhost:5173](http://localhost:5173)
 
-### Development Guidelines & Network Rules
+### Development Guidelines & Security Architecture
 
-* **API Integration Proxy:** Any HTTP client request mapped directly using local relative syntax (e.g., fetch('/api/example')) maps automatically to the FastAPI layer via Vite configuration rules. No explicit domain variables are required in development code branches.
-* **Database Viewing:** To visually query the SQLite state tables directly, run extensions like *SQLite Viewer* within VS Code against the root database asset.
-
-## General architecture
-
-                  [ Universal Landing Page ]
-                     /                  \
-        [ Patient Login ]             [ Provider Login ]
-
-               |                              |
-     [ Patient Dashboard ]           [ Doctor Dashboard ]
-     - Upcoming Appointments         - Patient Queue / Schedule
-     - Care Plan & Rx Tracking       - Electronic Health Records (EHR)
-     - Secure Doctor Chat            - Patient Messaging & Telehealth
-
-my-app/
-│   backend/
-│   └── app/
-│       ├── __init__.py
-│       ├── database.py   # SQLAlchemy configuration
-|       ├── models.py     # Database schema models
-│       │── main.py       # FastAPI application & entry point
-│       ├── pyproject.toml
-│       └── uv.lock
-└── frontend/             # Vite/React app
+* **Input Sanitization:** Primary fields (Usernames and Emails) automatically run .strip().lower() modifications before evaluating database logic or checks. Keep string variables lowercase to guarantee alignment.
+* **Authentication Pipeline:** Authentication runs natively via cryptographically signed JWT strings stored inside **httpOnly cookies**. This completely protects our local states from XSS vulnerabilities.
+* **Making Network Requests:** When calling endpoints using fetch or axios from React components, always utilize relative syntax paths (e.g., fetch('/api/example')). You **MUST** include credentials: 'include' within your settings object parameters so the browser passes local secure proxy cookies through Vite flawlessly.
+* **Database Inspections:** To visually query local data tables without running external terminal modules, download the *SQLite Viewer* extension in VS Code and select the local asset (backend/app/database.db).

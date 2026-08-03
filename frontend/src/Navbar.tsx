@@ -1,6 +1,30 @@
 import { Link } from 'react-router-dom';
 
-function Navbar() {
+interface NavbarProps {
+    user: { username: string; first_name: string } | null;
+    setUser: (user: null) => void;
+}
+
+function Navbar({ user, setUser }: NavbarProps) {
+    const handleLogout = async () => {
+        try {
+            const response = await fetch('/api/logout', {
+                method: 'POST',
+                credentials: 'include', // CRITICAL: Permits cookie modifications
+            });
+
+            if (response.ok) {
+                alert('You have been logged out.');
+                
+                // Refresh the page or redirect to clear any lingering memory states
+                window.location.href = '/account'; 
+            } else {
+                console.error('Logout request rejected by server.');
+            }
+        } catch (err) {
+            console.error('Failed to communicate with logout pipeline:', err);
+        }
+    };
 
     return (
         <nav className="top-menu flex items-center justify-between p-4 bg-slate-900 text-white">
@@ -19,17 +43,30 @@ function Navbar() {
                 </Link>
 
                 {/* HashLink to jump to Contact section */}
-                <a href="/#contact-section" className="hover:text-sky-400 smooth-scroll">
-                    Contact
-                </a>
+                {!user && (
+                    <a href="/#contact-section" className="hover:text-sky-400 smooth-scroll">
+                        Contact
+                    </a>
+                )}
 
+                {!user && 
                 <Link to="/account" className="hover:text-sky-400 transition-colors">
                     Account
-                </Link>
+                </Link>}
 
                 <Link to="/dashboards" className="hover:text-sky-400 transition-colors">
                     Dashboards
                 </Link>
+
+                {/* LAST OPTION: The Logout Interactive Trigger */}
+                {user && (
+                    <button 
+                    onClick={handleLogout} 
+                    className="hover:text-sky-400 transition-colors font-medium text-base p-0 bg-transparent border-none cursor-pointer"
+                    >
+                        Log Out
+                    </button>
+                )}
             </div>
         </nav>
     );
