@@ -4,7 +4,9 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "bcrypt>=5.0.0",
+    "cryptography>=50.0.0",
     "fastapi[standard]>=0.140.7",
+    "passlib>=1.7.4",
     "pydantic[email]>=2.13.4",
     "pyjwt>=2.13.0",
     "sqlalchemy>=2.0.51",
@@ -12,3 +14,18 @@ dependencies = [
 
 [tool.fastapi]
 app-path = "main.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "..", "src"
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "httpx2>=2.10.0",
+    "pytest>=9.1.1",
+]
