@@ -41,3 +41,7 @@ dist-ssr
 frontend/dist/
 .eslintcache
 .vite/
+
+# Testing artifacts
+.vitest-attachments/
+frontend/tests/__screenshots__/

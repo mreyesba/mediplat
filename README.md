@@ -31,7 +31,7 @@ uv sync
 
 bash
 
-uv run fastapi dev
+uv run fastapi dev src/main.py
 
   * **API Core Server:** [http://localhost:8000](http://localhost:8000)
   * **Interactive API Playground Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)

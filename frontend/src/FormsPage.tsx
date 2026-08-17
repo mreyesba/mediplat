@@ -1,5 +1,5 @@
 import './FormsPage.css';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -10,6 +10,18 @@ interface FormsPageProps {
 function FormsPage({ type }: FormsPageProps) {
     const { setUser } = useAuth();
     const navigate = useNavigate();
+
+    // Generate accessible ID pairs automatically
+    const loginUsernameId = useId();
+    const loginPasswordId = useId();
+    
+    const signupEmailId = useId();
+    const signupUsernameId = useId();
+    const signupPasswordId = useId();
+    const signupFirstNameId = useId();
+    const signupLastNameId = useId();
+    const signupDobId = useId();
+    const signupSexId = useId();
   
     // Global form states
 
@@ -20,6 +32,7 @@ function FormsPage({ type }: FormsPageProps) {
     const [lastName, setLastName] = useState('');
     const [dob, setDob] = useState('');
     const [sex, setSex] = useState('');
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Multistep view tracker (Starts at step 1)
     const [step, setStep] = useState(1);
@@ -30,6 +43,7 @@ function FormsPage({ type }: FormsPageProps) {
     const handleNextStep = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setErrorMessage('');
     
         try {
             if (step === 1) {
@@ -45,7 +59,7 @@ function FormsPage({ type }: FormsPageProps) {
                     setStep(2); // Advance to username choice
                 } else {
                     const err = await response.json();
-                    alert(err.detail);
+                    setErrorMessage(err.detail || 'Email validation failed.');
                 }
             } else if (step === 2) {
                 // Step 2: Validate Username availability
@@ -60,7 +74,7 @@ function FormsPage({ type }: FormsPageProps) {
                     setStep(3); // Advance to account creation
                 } else {
                     const err = await response.json();
-                    alert(err.detail);
+                    setErrorMessage(err.detail || 'Username is not available.');
                 }
             } else if (step === 3) {
                 // Step 3: Send entire package to save to SQLite database
@@ -78,11 +92,10 @@ function FormsPage({ type }: FormsPageProps) {
                 });
                 
                 if (response.ok) {
-                    alert('Account created successfully! Please log in.');
                     window.location.reload(); // Reset state completely or route away
                 } else {
                     const err = await response.json();
-                    alert(err.detail);
+                    setErrorMessage(err.detail || 'Registration failed.');
                 }
             }
         } catch (err) {
@@ -97,6 +110,7 @@ function FormsPage({ type }: FormsPageProps) {
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
+        setErrorMessage('');
     
         try {
             const response = await fetch('/api/login', {
@@ -119,7 +133,7 @@ function FormsPage({ type }: FormsPageProps) {
                 navigate('/home'); 
             } else {
                 const err = await response.json();
-                alert(`Login failed: ${err.detail}`);
+                setErrorMessage(err.detail || 'Login failed.');
             }
         } catch (err) {
             console.error('Failed to submit payload:', err);
@@ -136,10 +150,12 @@ function FormsPage({ type }: FormsPageProps) {
                 <h2 className="text-xl font-bold">Welcome Back</h2>
                 <div className="flex flex-col gap-1">
                     <label 
+                        htmlFor={loginUsernameId}
                         className="text-sm font-semibold text-slate-700">
                         Username
                     </label>
                     <input 
+                        id={loginUsernameId}
                         type="text" 
                         value={username} 
                         onChange={(e) => setUsername(e.target.value)} 
@@ -147,16 +163,21 @@ function FormsPage({ type }: FormsPageProps) {
                 </div>
                 <div className="flex flex-col gap-1">
                     <label 
+                        htmlFor={loginPasswordId}
                         className="text-sm font-semibold text-slate-700">
                         Password
                     </label>
                     <input 
+                        id={loginPasswordId}
                         type="password" 
                         value={password} 
                         onChange={(e) => setPassword(e.target.value)} 
                         className="border rounded px-3 py-2" 
                         required />
                 </div>
+                {errorMessage && (
+                    <p className="text-sm text-red-600 font-medium">{errorMessage}</p>
+                )}
                 <button 
                     type="submit" 
                     className="bg-sky-600 text-white font-bold py-2 rounded">
@@ -182,10 +203,13 @@ function FormsPage({ type }: FormsPageProps) {
 
             {step >= 1 && (
             <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-slate-700">
+                <label 
+                    htmlFor={signupEmailId}
+                    className="text-sm font-semibold text-slate-700">
                     Enter Email Address
-                    </label>
+                </label>
                 <input 
+                    id={signupEmailId}
                     type="email" 
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
@@ -197,10 +221,13 @@ function FormsPage({ type }: FormsPageProps) {
 
             {step >= 2 && (
             <div className="flex flex-col gap-1">
-                <label className="text-sm font-semibold text-slate-700">
+                <label
+                    htmlFor={signupUsernameId} 
+                    className="text-sm font-semibold text-slate-700">
                     Choose an Available Username
                 </label>
                 <input 
+                    id={signupUsernameId}
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value)} 
@@ -213,10 +240,13 @@ function FormsPage({ type }: FormsPageProps) {
             {step === 3 && (
             <div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label
+                        htmlFor={signupPasswordId} 
+                        className="text-sm font-semibold text-slate-700">
                         Secure Your Password
                     </label>
                     <input 
+                        id={signupPasswordId}
                         type="password" 
                         value={password} 
                         onChange={(e) => setPassword(e.target.value)} 
@@ -225,10 +255,13 @@ function FormsPage({ type }: FormsPageProps) {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label
+                        htmlFor={signupFirstNameId} 
+                        className="text-sm font-semibold text-slate-700">
                         First Name
                     </label>
                     <input 
+                        id={signupFirstNameId}
                         type="text" 
                         value={firstName} 
                         onChange={(e) => setFirstName(e.target.value)} 
@@ -237,10 +270,13 @@ function FormsPage({ type }: FormsPageProps) {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label
+                        htmlFor={signupLastNameId} 
+                        className="text-sm font-semibold text-slate-700">
                         Last Name
                     </label>
                     <input 
+                        id={signupLastNameId}
                         type="text" 
                         value={lastName} 
                         onChange={(e) => setLastName(e.target.value)} 
@@ -249,10 +285,13 @@ function FormsPage({ type }: FormsPageProps) {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label
+                        htmlFor={signupDobId} 
+                        className="text-sm font-semibold text-slate-700">
                         Date of birth
                     </label>
                     <input 
+                        id={signupDobId}
                         type="date" 
                         value={dob} 
                         onChange={(e) => setDob(e.target.value)} 
@@ -261,10 +300,13 @@ function FormsPage({ type }: FormsPageProps) {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold text-slate-700">
+                    <label
+                        htmlFor={signupSexId} 
+                        className="text-sm font-semibold text-slate-700">
                         Sex
                     </label>
                     <select 
+                        id={signupSexId}
                         value={sex} 
                         onChange={(e) => setSex(e.target.value)} 
                         className="border rounded px-3 py-2 outline-sky-500 bg-white"
@@ -279,6 +321,9 @@ function FormsPage({ type }: FormsPageProps) {
             )}
 
             <div className="flex gap-2 justify-end mt-2">
+            {errorMessage && (
+                <p className="text-sm text-red-600 font-medium">{errorMessage}</p>
+            )}
             {step > 1 && (
                 <button 
                     type="button" 
