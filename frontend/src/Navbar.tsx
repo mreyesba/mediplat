@@ -14,8 +14,6 @@ function Navbar({ user, setUser }: NavbarProps) {
             });
 
             if (response.ok) {
-                alert('You have been logged out.');
-                
                 // Refresh the page or redirect to clear any lingering memory states
                 window.location.href = '/account'; 
             } else {
