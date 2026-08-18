@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Patients from './Patients';
 
 interface NavbarProps {
     user: { username: string; first_name: string } | null;
@@ -46,6 +47,11 @@ function Navbar({ user, setUser }: NavbarProps) {
                         Contact
                     </a>
                 )}
+
+                {user && 
+                <Link to="/patients" className="hover:text-sky-400 transition-colors">
+                    Patients
+                </Link>}
 
                 {!user && 
                 <Link to="/account" className="hover:text-sky-400 transition-colors">

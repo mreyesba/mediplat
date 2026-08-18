@@ -48,10 +48,20 @@ class UserRegister(BaseModel):
     dob: date
     sex: models.SexEnum
 
+class PatientRegister(BaseModel):
+    first_name: str
+    last_name: str
+    dob: date
+    sex: models.SexEnum
+    identifier: str
+
 # Secure cookie validation
     
 def get_current_user(request: Request) -> str:
     """Automatically extracts and validates the httpOnly cookie from incoming requests."""
+    logger.info("Validating credentials.")
+    print("Validating credentials")
+
     token = request.cookies.get("access_token")
 
     if not token:
@@ -228,3 +238,80 @@ def user_logout(response: Response):
     )
     
     return {"status": "success", "message": "Logged out successfully"}
+
+@app.post("/api/patient_register")
+def patient_register(params: PatientRegister, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info("Patient register.")
+
+    duplicate_check = db.query(models.PatientTest).filter(
+        (models.PatientTest.identifier == params.identifier)
+    ).first()
+
+
+    if not duplicate_check:
+        new_patient = models.PatientTest(
+            first_name = params.first_name.strip(),
+            last_name = params.last_name.strip(),
+            dob = params.dob,
+            sex = params.sex,
+            identifier = params.identifier
+        )
+        
+        db.add(new_patient)
+        db.flush()
+        db.commit()
+
+    current_user_obj = db.query(models.UserTest).filter(
+        (models.UserTest.username == current_user)
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+    
+    current_user_id = current_user_obj.id
+
+    existing_registry = db.query(models.PatientRegistryTest).filter(
+        ((models.PatientRegistryTest.patient_identifier == params.identifier) &
+         (models.PatientRegistryTest.provider_identifier == current_user_id))
+    ).first()
+        
+    if not existing_registry:
+        first_registry = models.PatientRegistryTest(
+            patient_identifier = params.identifier,
+            provider_identifier = current_user_id,
+            info = "First entry"
+        )
+
+        db.add(first_registry)
+        db.flush()
+        db.commit()
+    
+    return {"status": "success", "message": "Patient registered"}
+
+@app.get("/api/get_entry_count")
+def get_entry_count(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info("Get entry count.")
+    print("get count")
+
+    current_user_obj = db.query(models.UserTest).filter(
+        (models.UserTest.username == current_user)
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+    
+    current_user_id = current_user_obj.id
+    
+    entry_count = db.query(models.PatientRegistryTest).filter(
+        (models.PatientRegistryTest.provider_identifier == current_user_id)
+    ).count()
+
+    return {
+        "count" : entry_count
+    }
