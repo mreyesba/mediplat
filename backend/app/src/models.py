@@ -1,5 +1,7 @@
 import enum
-from sqlalchemy import Column, Integer, String, ForeignKey, Date, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Enum, DateTime
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from database import Base
 
 class SexEnum(str, enum.Enum):
@@ -37,13 +39,23 @@ class PatientTest(Base):
     dob = Column(Date)
     sex = Column(Enum(SexEnum))
 
+    # 👈 Enables patient.entries
+    entries = relationship("PatientEntryTest", back_populates="patient")
+
 # MIGHT WANT TO UNIFY WITH USER
 
-class PatientRegistryTest(Base):
+# 1. Updated Database Model
+class PatientEntryTest(Base):
     __tablename__ = "patient_registry_test"
 
-    patient_identifier = Column(String, ForeignKey("patient_test.identifier"), primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True) # 👈 Add surrogate PK
+    
+    patient_identifier = Column(String, ForeignKey("patient_test.identifier"))
+    
+    provider_identifier = Column(Integer, ForeignKey("user_test.id"))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    info = Column(String)
 
-    provider_identifier = Column(String, ForeignKey("user_test.id"), primary_key=True)
-
-    info = Column(String) # Adding general info field to store info for now
+    patient = relationship("PatientTest", back_populates="entries")

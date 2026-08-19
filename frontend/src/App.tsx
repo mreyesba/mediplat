@@ -6,7 +6,7 @@ import Account from './Account.tsx';
 import Dashboards from './Dashboards.tsx';
 import FormsPage from './FormsPage.tsx';
 import { useAuth } from './AuthContext.tsx';
-import Patients from './Patients.tsx';
+import Patients from './components/patients/Patients.tsx';
 
 // Simple Page Components
 const NotFound = () => <h2>⚠️ 404 - Page Not Found</h2>;
@@ -30,7 +30,7 @@ function App() {
                     {/* This renders at /account/settings */}
                     <Route path="signup" element={<FormsPage type="signup" />} />
                 </Route>
-                <Route path="/patients" element={<Patients user={user} setUser={setUser} />} />
+                <Route path="/patients" element={<Patients />} />
                 <Route path="/dashboards" element={<Dashboards />} />
                 {/* Catch-all route for any undefined path */}
                 <Route path="*" element={<NotFound />} />
