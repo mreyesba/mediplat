@@ -1,11 +1,15 @@
 import logging
 from fastapi import FastAPI, Depends, HTTPException, status, Response, Request
 from pydantic import BaseModel, EmailStr
-from datetime import date
+from datetime import date, datetime
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from security import hash_password, verify_password, create_access_token, verify_access_token
 from database import engine, Base, get_db
+from pydantic import BaseModel
+from datetime import date
+from typing import List
+from sqlalchemy.orm import joinedload
 import models
 
 # Initialize the Python standard logging configuration framework
@@ -54,6 +58,32 @@ class PatientRegister(BaseModel):
     dob: date
     sex: models.SexEnum
     identifier: str
+
+class AddEntry(BaseModel):
+    patient_identifier: str
+    info: str | None = None
+
+class EntryResponse(BaseModel):
+    id: int
+    patient_identifier: str
+    provider_identifier: int 
+    created_at: datetime
+    info: str | None = None
+
+    class Config:
+        from_attributes = True  # Allows Pydantic to read SQLAlchemy ORM models (Pydantic v2)
+        # Use orm_mode = True if you are on Pydantic v1
+
+class PatientWithEntriesResponse(BaseModel):
+    identifier: str
+    first_name: str
+    last_name: str
+    dob: date
+    sex: models.SexEnum
+    entries: List[EntryResponse] = []  # 👈 Nested list of entries
+
+    class Config:
+        from_attributes = True
 
 # Secure cookie validation
     
@@ -273,23 +303,61 @@ def patient_register(params: PatientRegister, current_user: str = Depends(get_cu
     
     current_user_id = current_user_obj.id
 
-    existing_registry = db.query(models.PatientRegistryTest).filter(
-        ((models.PatientRegistryTest.patient_identifier == params.identifier) &
-         (models.PatientRegistryTest.provider_identifier == current_user_id))
+    existing_entry = db.query(models.PatientEntryTest).filter(
+        ((models.PatientEntryTest.patient_identifier == params.identifier) &
+         (models.PatientEntryTest.provider_identifier == current_user_id))
     ).first()
         
-    if not existing_registry:
-        first_registry = models.PatientRegistryTest(
+    if not existing_entry:
+        first_entry = models.PatientEntryTest(
             patient_identifier = params.identifier,
             provider_identifier = current_user_id,
             info = "First entry"
         )
 
-        db.add(first_registry)
+        db.add(first_entry)
         db.flush()
         db.commit()
     
     return {"status": "success", "message": "Patient registered"}
+
+@app.post("/api/add_entry")
+def add_entry(params: AddEntry, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info("Patient register.")
+
+    patient = db.query(models.PatientTest).filter(
+        (models.PatientTest.identifier == params.patient_identifier)
+    ).first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration failed."
+        )
+
+    current_user_obj = db.query(models.UserTest).filter(
+        (models.UserTest.username == current_user)
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+    
+    current_user_id = current_user_obj.id
+
+    new_entry = models.PatientEntryTest(
+        patient_identifier = patient.identifier,
+        provider_identifier = current_user_id,
+        info = params.info
+    )
+
+    db.add(new_entry)
+    db.flush()
+    db.commit()
+    
+    return {"status": "success", "message": "Entry added"}
 
 @app.get("/api/get_entry_count")
 def get_entry_count(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -308,10 +376,36 @@ def get_entry_count(current_user: str = Depends(get_current_user), db: Session =
     
     current_user_id = current_user_obj.id
     
-    entry_count = db.query(models.PatientRegistryTest).filter(
-        (models.PatientRegistryTest.provider_identifier == current_user_id)
+    entry_count = db.query(models.PatientEntryTest).filter(
+        (models.PatientEntryTest.provider_identifier == current_user_id)
     ).count()
 
     return {
         "count" : entry_count
     }
+
+@app.get("/api/get_patients", response_model=List[PatientWithEntriesResponse])
+def get_patients(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info("Fetching patients and entries for current provider.")
+
+    current_user_obj = db.query(models.UserTest).filter(
+        models.UserTest.username == current_user
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+
+    # Query patients belonging to this provider, eagerly loading their entries
+    patients = (
+        db.query(models.PatientTest)
+        .join(models.PatientEntryTest)
+        .filter(models.PatientEntryTest.provider_identifier == current_user_obj.id)
+        .options(joinedload(models.PatientTest.entries))  # Fetch entries in the same query
+        .distinct()
+        .all()
+    )
+
+    return patients
