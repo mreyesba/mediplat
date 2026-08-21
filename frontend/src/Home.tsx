@@ -1,9 +1,4 @@
-import { useAuth } from './AuthContext';
-import Contact from './Contact';
-
 function Home() {
-    const { user } = useAuth();
-
     return (   
         <div>
             <section className="hero-section bg-slate-100 py-100 text-center">
@@ -21,23 +16,6 @@ function Home() {
                     Our Services
                 </h2>
             </section>
-
-            {/* Contact section */}
-            {!user && (
-                <section 
-                    id="contact-section" 
-                    className="py-16 bg-white border-t">
-                    <div className="max-w-md mx-auto px-4">
-                        <h2 className="text-3x1 font-bold text-center mb-6">
-                            Get in contact
-                        </h2>
-                        <p className="text-center text-gray-500 mb-8">
-                            Leave your info and we will get in contact soon
-                        </p>
-                        <Contact />
-                    </div>
-                </section>
-            )}
         </div>
     );
 }

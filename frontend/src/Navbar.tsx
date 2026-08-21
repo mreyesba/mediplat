@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import Patients from './Patients';
 
 interface NavbarProps {
     user: { username: string; first_name: string } | null;
@@ -34,19 +33,10 @@ function Navbar({ user, setUser }: NavbarProps) {
 
             {/* Navigation Links */}
             <div className="flex gap-6">
+                {user && 
                 <Link to="/" className="hover:text-sky-400 transition-colors">
                     Home
-                </Link>
-                <Link to="/about" className="hover:text-sky-400 transition-colors">
-                    About
-                </Link>
-
-                {/* HashLink to jump to Contact section */}
-                {!user && (
-                    <a href="/#contact-section" className="hover:text-sky-400 smooth-scroll">
-                        Contact
-                    </a>
-                )}
+                </Link>}
 
                 {user && 
                 <Link to="/patients" className="hover:text-sky-400 transition-colors">
@@ -66,8 +56,7 @@ function Navbar({ user, setUser }: NavbarProps) {
                 {user && (
                     <button 
                     onClick={handleLogout} 
-                    className="hover:text-sky-400 transition-colors font-medium text-base p-0 bg-transparent border-none cursor-pointer"
-                    >
+                    className="hover:text-sky-400 transition-colors font-medium text-base p-0 bg-transparent border-none cursor-pointer">
                         Log Out
                     </button>
                 )}
