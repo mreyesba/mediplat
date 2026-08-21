@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './Navbar.tsx';
 import Home from './Home.tsx';
-import About from './About.tsx';
 import Account from './Account.tsx';
 import Dashboards from './Dashboards.tsx';
 import FormsPage from './FormsPage.tsx';
@@ -20,8 +19,7 @@ function App() {
 
 			{/* Page Display Area */}
             <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
+                <Route path="/" element={user ? <Home /> : <Navigate to="/account" replace />} />
                 {/* Nested Routes inside Account */}
                 <Route path="/account" element={!user ? <Account /> : <Navigate to="/" replace />}>
                     <Route index element={<FormsPage type="login" />} />
