@@ -16,8 +16,7 @@ function Patients() {
         setErrorMessage("");
         try {
             const res = await fetch("/api/get_patients", {
-                credentials: "include",
-                cache: "no-store",
+                credentials: "include"
             });
 
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);

@@ -9,38 +9,55 @@ class SexEnum(str, enum.Enum):
     FEMALE = "female"
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
+class UserRole(str, enum.Enum):
+    PATIENT = "patient"
+    PROVIDER = "provider"
+    FRONT_DESK = "front_desk"
+    CLINIC_ADMIN = "clinic_admin"
+
 class UserTest(Base):
     __tablename__ = "user_test"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.PATIENT)
+
+    # Relationships
+    staff_info = relationship("UserInfoTest", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    patient_profile = relationship("PatientTest", back_populates="user", uselist=False)
+
+    def has_role(self, role_name: str | UserRole) -> bool:
+        if isinstance(role_name, UserRole):
+            return self.role == role_name
+        return self.role.value == role_name or self.role == role_name
 
 class UserInfoTest(Base):
     __tablename__ = "user_info_test"
 
-    user_id = Column(String, ForeignKey("user_test.id"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user_test.id"), primary_key=True)
 
     first_name = Column(String)
     last_name = Column(String)
-
     dob = Column(Date)
-    sex = Column(Enum(SexEnum))
+
+    user = relationship("UserTest", back_populates="staff_info")
 
 class PatientTest(Base):
     __tablename__ = "patient_test"
 
     identifier = Column(String, primary_key=True, index=True)
 
-    first_name = Column(String)
-    last_name = Column(String)
+    user_id = Column(Integer, ForeignKey("user_test.id"), nullable=True, unique=True)
+    
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    dob = Column(Date, nullable=False)
+    sex = Column(Enum(SexEnum), default=SexEnum.PREFER_NOT_TO_SAY)
 
-    dob = Column(Date)
-    sex = Column(Enum(SexEnum))
-
-    # 👈 Enables patient.entries
-    entries = relationship("PatientEntryTest", back_populates="patient")
+    user = relationship("UserTest", back_populates="patient_profile")
+    entries = relationship("PatientEntryTest", back_populates="patient", cascade="all, delete-orphan")
 
 # MIGHT WANT TO UNIFY WITH USER
 
@@ -59,3 +76,4 @@ class PatientEntryTest(Base):
     info = Column(String)
 
     patient = relationship("PatientTest", back_populates="entries")
+    provider = relationship("UserTest")

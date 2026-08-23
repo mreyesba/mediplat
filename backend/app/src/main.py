@@ -50,7 +50,7 @@ class UserRegister(BaseModel):
     first_name: str
     last_name: str
     dob: date
-    sex: models.SexEnum
+    role: models.UserRole
 
 class PatientRegister(BaseModel):
     first_name: str
@@ -217,7 +217,8 @@ def register(params: UserRegister, db: Session = Depends(get_db)):
     new_user = models.UserTest(
         username=clean_username,
         email=clean_email,
-        password=secure_hashed_password
+        password=secure_hashed_password,
+        role = params.role
     )
 
     db.add(new_user)
@@ -227,8 +228,7 @@ def register(params: UserRegister, db: Session = Depends(get_db)):
         user_id = new_user.id,
         first_name = params.first_name.strip(),
         last_name = params.last_name.strip(),
-        dob = params.dob,
-        sex = params.sex
+        dob = params.dob
     )
     
     db.add(new_user_info)
