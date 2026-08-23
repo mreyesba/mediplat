@@ -21,17 +21,18 @@ function FormsPage({ type }: FormsPageProps) {
     const signupFirstNameId = useId();
     const signupLastNameId = useId();
     const signupDobId = useId();
-    const signupSexId = useId();
+    const signupRoleId = useId();
   
     // Global form states
 
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [passwordConfirm, setPasswordConfirm] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [dob, setDob] = useState('');
-    const [sex, setSex] = useState('');
+    const [role, setRole] = useState('');
     const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Multistep view tracker (Starts at step 1)
@@ -40,7 +41,7 @@ function FormsPage({ type }: FormsPageProps) {
 
     // Signup state routing logic
 
-    const handleNextStep = async (e: React.FormEvent) => {
+    const handleNextStep = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setLoading(true);
         setErrorMessage('');
@@ -77,6 +78,11 @@ function FormsPage({ type }: FormsPageProps) {
                     setErrorMessage(err.detail || 'Username is not available.');
                 }
             } else if (step === 3) {
+                if (password !== passwordConfirm) {
+                    setErrorMessage('Passwords do not match.');
+                    setLoading(false);
+                    return;
+                }
                 // Step 3: Send entire package to save to SQLite database
                 const response = await fetch('/api/register', {
                     method: 'POST',
@@ -88,11 +94,11 @@ function FormsPage({ type }: FormsPageProps) {
                                            first_name: firstName, 
                                            last_name: lastName,
                                            dob,
-                                           sex }),
+                                           role }),
                 });
                 
                 if (response.ok) {
-                    window.location.reload(); // Reset state completely or route away
+                    navigate('/account/login');
                 } else {
                     const err = await response.json();
                     setErrorMessage(err.detail || 'Registration failed.');
@@ -108,7 +114,7 @@ function FormsPage({ type }: FormsPageProps) {
 
     // Login logic
 
-    const handleLoginSubmit = async (e) => {
+    const handleLoginSubmit = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setErrorMessage('');
     
@@ -256,6 +262,19 @@ function FormsPage({ type }: FormsPageProps) {
 
                 <div className="flex flex-col gap-1">
                     <label
+                        className="text-sm font-semibold text-slate-700">
+                        Confirm Password
+                    </label>
+                    <input
+                        type="password" 
+                        value={passwordConfirm} 
+                        onChange={(e) => setPasswordConfirm(e.target.value)} 
+                        className="border rounded px-3 py-2 outline-sky-500" 
+                        required />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <label
                         htmlFor={signupFirstNameId} 
                         className="text-sm font-semibold text-slate-700">
                         First Name
@@ -299,23 +318,25 @@ function FormsPage({ type }: FormsPageProps) {
                         required />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                    <label
-                        htmlFor={signupSexId} 
-                        className="text-sm font-semibold text-slate-700">
-                        Sex
-                    </label>
-                    <select 
-                        id={signupSexId}
-                        value={sex} 
-                        onChange={(e) => setSex(e.target.value)} 
-                        className="border rounded px-3 py-2 outline-sky-500 bg-white"
-                        required>
-                        <option value="">Select Option...</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="prefer_not_to_say">Prefer Not To Say</option>
-                    </select>
+                <div>
+                    <div className="flex flex-col gap-1">
+                        <label
+                            htmlFor={signupRoleId} 
+                            className="text-sm font-semibold text-slate-700">
+                            Role
+                        </label>
+                        <select 
+                            id={signupRoleId}
+                            value={role} 
+                            onChange={(e) => setRole(e.target.value)} 
+                            className="border rounded px-3 py-2 outline-sky-500 bg-white"
+                            required>
+                            <option value="">Select Option...</option>
+                            <option value="provider">Provider</option>
+                            <option value="front_desk">Front desk</option>
+                            <option value="clinic_admin">Clinic admin</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             )}
