@@ -12,8 +12,16 @@
     "test:browser": "vitest --config=vitest.browser.config.ts"
   },
   "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/interaction": "^6.1.21",
+    "@fullcalendar/react": "^7.0.2",
+    "@fullcalendar/timegrid": "^6.1.21",
     "@tailwindcss/vite": "^4.3.2",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.33.0",
     "react": "^19.2.7",
+    "react-big-calendar": "^1.20.0",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
     "recharts": "^3.10.1",

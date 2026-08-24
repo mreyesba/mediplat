@@ -43,6 +43,11 @@ function Navbar({ user, setUser }: NavbarProps) {
                     Patients
                 </Link>}
 
+                {user && 
+                <Link to="/appointments" className="hover:text-sky-400 transition-colors">
+                    Appointments
+                </Link>}
+
                 {!user && 
                 <Link to="/account" className="hover:text-sky-400 transition-colors">
                     Account

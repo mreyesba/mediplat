@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+
 
 :root {
   --text: #6b6375;
@@ -115,3 +117,72 @@ code {
 html {
   scroll-behavior: smooth;
 }
+
+/* Custom Modern Theme Overrides for React Big Calendar */
+
+/* 1. Global Container Styling */
+.rbc-calendar {
+  @apply font-sans text-neutral-800;
+}
+
+/* 2. Header and Navigation Row Cleanup */
+.rbc-toolbar {
+  @apply mb-6 !flex flex-row justify-between items-center gap-4;
+}
+
+.rbc-toolbar-label {
+  @apply text-lg font-bold text-neutral-900 !text-center;
+}
+
+.rbc-btn-group {
+  @apply bg-neutral-100 p-0.5 rounded-lg !border-none shadow-inner !inline-flex gap-0.5;
+}
+
+.rbc-btn-group button {
+  @apply !bg-transparent !text-neutral-600 px-3 py-1 rounded-md text-xs font-semibold !border-none cursor-pointer transition-all hover:!text-neutral-900 hover:bg-white/50 active:bg-transparent shadow-none !m-0;
+}
+
+.rbc-btn-group button.rbc-active {
+  @apply !bg-white !text-neutral-900 shadow-sm !font-bold;
+}
+
+/* 3. Grid Column Headers Styling */
+.rbc-header {
+  @apply border-b border-neutral-200 py-3 text-xs font-bold uppercase tracking-wider text-neutral-500 bg-neutral-50/50 !border-l-0 text-center;
+}
+
+/* 4. Grid Intersection Line Cleans */
+.rbc-time-view, 
+.rbc-month-view, 
+.rbc-time-content, 
+.rbc-timeslot-group, 
+.rbc-day-bg, 
+.rbc-month-row,
+.rbc-time-header-content,
+.rbc-time-header {
+  @apply !border-neutral-100;
+}
+
+.rbc-current-time-indicator {
+  @apply bg-red-500 h-0.5;
+}
+
+/* 5. Modern Event Blocks Overrides */
+.rbc-event {
+  @apply !bg-neutral-950 !text-neutral-50 !rounded-lg !px-2.5 !py-1 !text-xs !font-medium !border-none !shadow-sm transition-all hover:scale-[1.01] hover:!bg-neutral-900;
+}
+
+/* Aligns text baseline for week/day views */
+.rbc-event-content {
+  @apply text-left font-medium leading-relaxed;
+}
+
+/* 6. Month-view Day Numbers spacing */
+.rbc-date-cell {
+  @apply p-2 text-right text-xs font-medium text-neutral-500;
+}
+
+.rbc-off-option, .rbc-off-range-bg {
+  @apply bg-neutral-50/30 text-neutral-300;
+}
+  
