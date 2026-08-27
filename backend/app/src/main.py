@@ -85,6 +85,11 @@ class PatientWithEntriesResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class CreateEvent(BaseModel):
+    title: str
+    start: datetime
+    end: datetime
+
 # Secure cookie validation
     
 def get_current_user(request: Request) -> str:
@@ -409,3 +414,42 @@ def get_patients(current_user: str = Depends(get_current_user), db: Session = De
     )
 
     return patients
+
+@app.post("/api/create_event")
+def add_entry(params: AddEntry, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info("Create event.")
+
+    patient = db.query(models.PatientTest).filter(
+        (models.PatientTest.identifier == params.patient_identifier)
+    ).first()
+
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registration failed."
+        )
+
+    current_user_obj = db.query(models.UserTest).filter(
+        (models.UserTest.username == current_user)
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+    
+    current_user_id = current_user_obj.id
+
+    new_entry = models.PatientEntryTest(
+        patient_identifier = patient.identifier,
+        provider_identifier = current_user_id,
+        info = params.info
+    )
+
+    db.add(new_entry)
+    db.flush()
+    db.commit()
+    
+    return {"status": "success", "message": "Entry added"}
+
