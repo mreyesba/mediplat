@@ -90,6 +90,12 @@ class CreateEvent(BaseModel):
     start: datetime
     end: datetime
 
+class UpdateEvent(BaseModel):
+    id : int
+    title: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+
 # Secure cookie validation
     
 def get_current_user(request: Request) -> str:
@@ -119,7 +125,11 @@ def get_current_user(request: Request) -> str:
 # API endpoints
 
 @app.post("/api/login")
-def user_login(response: Response, params: UserLogin, db: Session = Depends(get_db)):
+def user_login(
+    response: Response, 
+    params: UserLogin, 
+    db: Session = Depends(get_db)
+):
     clean_username = params.username.strip().lower()
 
     logger.info(f"Login attempt received for username: {clean_username}")
@@ -157,7 +167,10 @@ def user_login(response: Response, params: UserLogin, db: Session = Depends(get_
 
 
 @app.post("/api/validate_email")
-def validate_email(params: ValidateEmail, db: Session = Depends(get_db)):
+def validate_email(
+    params: ValidateEmail, 
+    db: Session = Depends(get_db)
+):
     # Query the UserTest table to see if a row matches the incoming username
     clean_email = params.email.strip().lower()
 
@@ -179,7 +192,10 @@ def validate_email(params: ValidateEmail, db: Session = Depends(get_db)):
 
 
 @app.post("/api/validate_user")
-def validate_user(params: ValidateUsername, db: Session = Depends(get_db)):
+def validate_user(
+    params: ValidateUsername, 
+    db: Session = Depends(get_db)
+):
     # Query the UserTest table to see if a row matches the incoming username
     clean_username = params.username.strip().lower()
 
@@ -201,7 +217,10 @@ def validate_user(params: ValidateUsername, db: Session = Depends(get_db)):
 
 
 @app.post("/api/register")
-def register(params: UserRegister, db: Session = Depends(get_db)):
+def register(
+    params: UserRegister, 
+    db: Session = Depends(get_db)
+):
     clean_username = params.username.strip().lower()
     clean_email = params.email.strip().lower()
 
@@ -245,7 +264,10 @@ def register(params: UserRegister, db: Session = Depends(get_db)):
     return {"status": "success", "message": "Account created successfully!"}
 
 @app.get("/api/me")
-def get_authenticated_profile(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_authenticated_profile(
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     """A secure private endpoint. Only viewable if a valid httpOnly cookie is present."""
     user_info = db.query(models.UserInfoTest)\
         .join(models.UserTest, models.UserInfoTest.user_id == models.UserTest.id)\
@@ -275,7 +297,11 @@ def user_logout(response: Response):
     return {"status": "success", "message": "Logged out successfully"}
 
 @app.post("/api/patient_register")
-def patient_register(params: PatientRegister, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+def patient_register(
+    params: PatientRegister, 
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     logger.info("Patient register.")
 
     duplicate_check = db.query(models.PatientTest).filter(
@@ -327,7 +353,11 @@ def patient_register(params: PatientRegister, current_user: str = Depends(get_cu
     return {"status": "success", "message": "Patient registered"}
 
 @app.post("/api/add_entry")
-def add_entry(params: AddEntry, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+def add_entry(
+    params: AddEntry, 
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     logger.info("Patient register.")
 
     patient = db.query(models.PatientTest).filter(
@@ -365,7 +395,10 @@ def add_entry(params: AddEntry, current_user: str = Depends(get_current_user), d
     return {"status": "success", "message": "Entry added"}
 
 @app.get("/api/get_entry_count")
-def get_entry_count(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_entry_count(
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     logger.info("Get entry count.")
     print("get count")
 
@@ -390,7 +423,10 @@ def get_entry_count(current_user: str = Depends(get_current_user), db: Session =
     }
 
 @app.get("/api/get_patients", response_model=List[PatientWithEntriesResponse])
-def get_patients(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_patients(
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     logger.info("Fetching patients and entries for current provider.")
 
     current_user_obj = db.query(models.UserTest).filter(
@@ -415,41 +451,109 @@ def get_patients(current_user: str = Depends(get_current_user), db: Session = De
 
     return patients
 
-@app.post("/api/create_event")
-def add_entry(params: AddEntry, current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+@app.post("/api/create_event", status_code=status.HTTP_201_CREATED)
+def add_entry(
+    params: CreateEvent, 
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     logger.info("Create event.")
 
-    patient = db.query(models.PatientTest).filter(
-        (models.PatientTest.identifier == params.patient_identifier)
-    ).first()
-
-    if not patient:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Registration failed."
-        )
-
     current_user_obj = db.query(models.UserTest).filter(
-        (models.UserTest.username == current_user)
+        models.UserTest.username == current_user
     ).first()
 
     if not current_user_obj:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal error."
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
         )
-    
-    current_user_id = current_user_obj.id
 
-    new_entry = models.PatientEntryTest(
-        patient_identifier = patient.identifier,
-        provider_identifier = current_user_id,
-        info = params.info
+    # Validate time interval
+    if params.start > params.end:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid time interval."
+        )
+
+    new_event = models.EventTest(
+        title=params.title,
+        creator_id=current_user_obj.id,
+        start=params.start,
+        end=params.end
     )
 
-    db.add(new_entry)
-    db.flush()
+    db.add(new_event)
     db.commit()
+    db.refresh(new_event)
     
-    return {"status": "success", "message": "Entry added"}
+    return {"status": "success", "message": "Event added", "id": new_event.id}
+
+@app.put("/api/update_event")
+def update_entry(
+    params: UpdateEvent, 
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    logger.info("Update event.")
+
+    current_user_obj = db.query(models.UserTest).filter(
+        models.UserTest.username == current_user
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    event_obj = db.query(models.EventTest).filter(
+        models.EventTest.id == params.id
+    ).first()
+
+    if not event_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found."
+        )
+
+    # Optional: Verify the current user actually owns this event
+    if event_obj.creator_id != current_user_obj.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to edit this event."
+        )
+
+    # Determine final values
+    if params.title is not None:
+        title_final = params.title
+    else:
+        title_final = event_obj.title
+
+    if params.start is not None:
+        start_final = params.start
+    else:
+        start_final = event_obj.start
+
+    if params.end is not None:
+        end_final = params.end
+    else:
+        end_final = event_obj.end
+
+    if start_final > end_final:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid time interval."
+        )
+
+    # Mutate the tracked SQLAlchemy object directly
+    event_obj.title = title_final
+    event_obj.start = start_final
+    event_obj.end = end_final
+
+    # Save to database (db.add is NOT needed for existing session objects)
+    db.commit()
+    db.refresh(event_obj)
+    
+    return {"status": "success", "message": "Event updated"}
 
