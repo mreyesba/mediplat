@@ -27,6 +27,7 @@ class UserTest(Base):
     # Relationships
     staff_info = relationship("UserInfoTest", back_populates="user", uselist=False, cascade="all, delete-orphan")
     patient_profile = relationship("PatientTest", back_populates="user", uselist=False)
+    events = relationship("EventTest", back_populates="creator", cascade="all, delete-orphan")
 
     def has_role(self, role_name: str | UserRole) -> bool:
         if isinstance(role_name, UserRole):
@@ -77,3 +78,19 @@ class PatientEntryTest(Base):
 
     patient = relationship("PatientTest", back_populates="entries")
     provider = relationship("UserTest")
+
+# 1. Updated Database Model
+class EventTest(Base):
+    __tablename__ = "event_test"
+
+    id = Column(Integer, primary_key=True, autoincrement=True) # 👈 Add surrogate PK
+
+    title = Column(String)
+    
+    creator_id = Column(Integer, ForeignKey("user_test.id"))
+    
+    start = Column(DateTime(timezone=True))
+    
+    end = Column(DateTime(timezone=True))
+
+    creator = relationship("UserTest", back_populates="events")

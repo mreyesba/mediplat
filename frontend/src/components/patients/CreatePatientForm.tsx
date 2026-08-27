@@ -31,16 +31,16 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
 
         try {
             const response = await fetch("/api/patient_register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-                    first_name: firstName,
-                    last_name: lastName,
-                    dob,
-                    sex,
-                    identifier,
-                }),
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        dob,
+                        sex,
+                        identifier,
+                    }),
             });
 
             if (response.ok) {
