@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views, type View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import enUS from "date-fns/locale/en-US";
-import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
 
 const locales = { "en-US": enUS };
 
@@ -62,183 +62,245 @@ interface CalendarEvent {
 }
 
 export function CalendarView() {
-  const [events, setEvents] = useState<CalendarEvent[]>([
+    const [events, setEvents] = useState<CalendarEvent[]>([
     {
-      id: "1",
-      title: "Sync with Design Team",
-      start: new Date(2026, 7, 24, 10, 0),
-      end: new Date(2026, 7, 24, 11, 30),
+        id: "1",
+        title: "Sync with Design Team",
+        start: new Date(2026, 7, 24, 10, 0),
+        end: new Date(2026, 7, 24, 11, 30),
     },
     {
-      id: "2",
-      title: "Project Architecture Review",
-      start: new Date(2026, 7, 26, 14, 0),
-      end: new Date(2026, 7, 26, 16, 0),
+        id: "2",
+        title: "Project Architecture Review",
+        start: new Date(2026, 7, 26, 14, 0),
+        end: new Date(2026, 7, 26, 16, 0),
     },
-  ]);
+    ]);
 
-  const [view, setView] = useState<View>(Views.WEEK);
-  const [date, setDate] = useState(new Date(2026, 7, 24));
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
-  // Guard against duplicate clicks & network latency
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const [view, setView] = useState<View>(Views.WEEK);
+    const [date, setDate] = useState(new Date(2026, 7, 24));
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [newEventTitle, setNewEventTitle] = useState("");
-  const [eventDate, setEventDate] = useState("");
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:00");
-  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+    // Guard against duplicate clicks & network latency
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const isBusy = isSubmitting || isDeleting;
 
-  const closeModal = () => {
-    if (isSubmitting) return; // Prevent closing while network request is in-flight
-    setIsModalOpen(false);
-    setErrorMessage(null);
-    setEditingEventId(null);
-    setNewEventTitle("");
-  };
+    const [newEventTitle, setNewEventTitle] = useState("");
+    const [eventDate, setEventDate] = useState("");
+    const [startTime, setStartTime] = useState("09:00");
+    const [endTime, setEndTime] = useState("10:00");
+    const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
-  const populateFormWithDates = (start: Date, end: Date) => {
-    setEventDate(formatDateForInput(start));
-    setStartTime(formatTimeForInput(start));
-    setEndTime(formatTimeForInput(end));
-  };
+    const fetchEvents = async () => {
+        setErrorMessage("");
+        try {
+            const res = await fetch("/api/get_events", {
+                credentials: "include"
+            });
 
-  const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    setEditingEventId(null);
-    setNewEventTitle("");
-    setErrorMessage(null);
-    populateFormWithDates(start, end);
-    setIsModalOpen(true);
-  };
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-  const handleSelectEvent = (event: CalendarEvent) => {
-    setEditingEventId(event.id);
-    setNewEventTitle(event.title);
-    setErrorMessage(null);
-    populateFormWithDates(event.start, event.end);
-    setIsModalOpen(true);
-  };
+            const data: { id: number; title: string; start: string; end: string }[] = await res.json();
+            setEvents(
+                data.map((evt) => ({
+                    id: String(evt.id),
+                    title: evt.title,
+                    start: new Date(evt.start),
+                    end: new Date(evt.end),
+                }))
+            );
+        } catch (error) {
+            console.error("Event retrieval failed:", error);
+            setEvents([]);
+            setErrorMessage("Failed to fetch events.");
+        }
+    };
 
-  // Quick preset button handler
-  const applyDurationPreset = (durationMinutes: number) => {
-    const startObj = combineDateAndTime(eventDate, startTime);
-    const endObj = new Date(startObj.getTime() + durationMinutes * 60 * 1000);
-    setEndTime(formatTimeForInput(endObj));
-  };
+    useEffect(() => {
+        fetchEvents();
+    }, []);
 
-  const handleSaveEventSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEventTitle.trim() || isSubmitting) return;
+    const closeModal = () => {
+        if (isBusy) return; // Prevent closing while network request is in-flight
+        setIsModalOpen(false);
+        setErrorMessage(null);
+        setEditingEventId(null);
+        setNewEventTitle("");
+    };
 
-    const startObj = combineDateAndTime(eventDate, startTime);
-    const endObj = combineDateAndTime(eventDate, endTime);
+    const populateFormWithDates = (start: Date, end: Date) => {
+        setEventDate(formatDateForInput(start));
+        setStartTime(formatTimeForInput(start));
+        setEndTime(formatTimeForInput(end));
+    };
 
-    if (endObj <= startObj) {
-      setErrorMessage("End time must be after the start time.");
-      return;
-    }
+    const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
+        setEditingEventId(null);
+        setNewEventTitle("");
+        setErrorMessage(null);
+        populateFormWithDates(start, end);
+        setIsModalOpen(true);
+    };
 
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    const previousEvents = [...events];
+    const handleSelectEvent = (event: CalendarEvent) => {
+        setEditingEventId(event.id);
+        setNewEventTitle(event.title);
+        setErrorMessage(null);
+        populateFormWithDates(event.start, event.end);
+        setIsModalOpen(true);
+    };
 
-    if (editingEventId) {
-      // 1. OPTIMISTIC UPDATE: Update calendar UI instantly
-      setEvents((prev) =>
-        prev.map((evt) =>
-          evt.id === editingEventId
-            ? { ...evt, title: newEventTitle, start: startObj, end: endObj }
-            : evt
-        )
-      );
+    // Quick preset button handler
+    const applyDurationPreset = (durationMinutes: number) => {
+        const startObj = combineDateAndTime(eventDate, startTime);
+        const endObj = new Date(startObj.getTime() + durationMinutes * 60 * 1000);
+        setEndTime(formatTimeForInput(endObj));
+    };
 
-      // 2. Perform API call in background
-      try {
-        const response = await fetch("/api/update_event", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            id: editingEventId,
-            title: newEventTitle,
-            start: startObj,
-            end: endObj,
-          }),
-        });
+    const handleSaveEventSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newEventTitle.trim() || isSubmitting) return;
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.detail || "Failed to update event.");
+        const startObj = combineDateAndTime(eventDate, startTime);
+        const endObj = combineDateAndTime(eventDate, endTime);
+
+        if (endObj <= startObj) {
+            setErrorMessage("End time must be after the start time.");
+            return;
         }
 
-        setIsSubmitting(false);
-        closeModal();
-      } catch (err: any) {
-        // Rollback state on error
-        setEvents(previousEvents);
-        setErrorMessage(err.message || "Network error occurred.");
-        setIsSubmitting(false);
-      }
-    } else {
-      // Create temporary ID for instant optimistic rendering
-      const tempId = `temp-${Date.now()}`;
-      const tempEvent: CalendarEvent = {
-        id: tempId,
-        title: newEventTitle,
-        start: startObj,
-        end: endObj,
-      };
+        setIsSubmitting(true);
+        setErrorMessage(null);
+        const previousEvents = [...events];
 
-      // 1. OPTIMISTIC UPDATE: Add event to calendar UI instantly
-      setEvents((prev) => [...prev, tempEvent]);
+        if (editingEventId) {
+            // 1. OPTIMISTIC UPDATE: Update calendar UI instantly
+            setEvents((prev) =>
+                prev.map((evt) =>
+                    evt.id === editingEventId
+                    ? { ...evt, title: newEventTitle, start: startObj, end: endObj }
+                    : evt
+                )
+            );
 
-      // 2. Perform API call in background
-      try {
-        const response = await fetch("/api/create_event", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            title: newEventTitle,
-            start: startObj,
-            end: endObj,
-          }),
-        });
+            // 2. Perform API call in background
+            try {
+                const response = await fetch("/api/update_event", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                    id: editingEventId,
+                    title: newEventTitle,
+                    start: startObj,
+                    end: endObj,
+                    }),
+                });
 
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.detail || "Failed to create event.");
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Failed to update event.");
+                }
+
+                setIsSubmitting(false);
+                closeModal();
+            } catch (err: any) {
+                // Rollback state on error
+                setEvents(previousEvents);
+                setErrorMessage(err.message || "Network error occurred.");
+                setIsSubmitting(false);
+            }
+        } else {
+            // Create temporary ID for instant optimistic rendering
+            const tempId = `temp-${Date.now()}`;
+            const tempEvent: CalendarEvent = {
+                id: tempId,
+                title: newEventTitle,
+                start: startObj,
+                end: endObj,
+            };
+
+            // 1. OPTIMISTIC UPDATE: Add event to calendar UI instantly
+            setEvents((prev) => [...prev, tempEvent]);
+
+            // 2. Perform API call in background
+            try {
+                const response = await fetch("/api/create_event", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                    title: newEventTitle,
+                    start: startObj,
+                    end: endObj,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Failed to create event.");
+                }
+
+                const data = await response.json();
+
+                // Swap temporary ID with actual database primary key
+                setEvents((prev) =>
+                    prev.map((evt) => (evt.id === tempId ? { ...evt, id: String(data.id) } : evt))
+                );
+
+                setIsSubmitting(false);
+                closeModal();
+            } catch (err: any) {
+                // Rollback state on error
+                setEvents(previousEvents);
+                setErrorMessage(err.message || "Network error occurred.");
+                setIsSubmitting(false);
+            }
         }
+    };
 
-        const data = await response.json();
+    const handleDeleteEvent = async () => {
+        if (!editingEventId || isBusy) return;
 
-        // Swap temporary ID with actual database primary key
-        setEvents((prev) =>
-          prev.map((evt) => (evt.id === tempId ? { ...evt, id: String(data.id) } : evt))
-        );
+        setIsDeleting(true);
+        setErrorMessage(null);
+        const previousEvents = [...events];
 
-        setIsSubmitting(false);
-        closeModal();
-      } catch (err: any) {
-        // Rollback state on error
-        setEvents(previousEvents);
-        setErrorMessage(err.message || "Network error occurred.");
-        setIsSubmitting(false);
-      }
-    }
-  };
+        // OPTIMISTIC UPDATE: Remove event from calendar UI instantly
+        setEvents((prev) => prev.filter((evt) => evt.id !== editingEventId));
 
-  return (
+        try {
+            const response = await fetch(`/api/delete_event?id=${editingEventId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || "Failed to delete event.");
+            }
+
+            setIsDeleting(false);
+            closeModal();
+        } catch (err: any) {
+            // Rollback state on error
+            setEvents(previousEvents);
+            setErrorMessage(err.message || "Network error occurred.");
+            setIsDeleting(false);
+        }
+    };
+
+    return (
     <div className="p-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-4">
-      <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
+        <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
         <div className="flex items-center gap-2">
-          <CalendarIcon className="h-6 w-6 text-neutral-700" />
-          <h1 className="text-2xl font-bold text-neutral-800">Schedule Workspace</h1>
+            <CalendarIcon className="h-6 w-6 text-neutral-700" />
+            <h1 className="text-2xl font-bold text-neutral-800">Schedule Workspace</h1>
         </div>
         <button
-          onClick={() => {
+            onClick={() => {
             setEditingEventId(null);
             setNewEventTitle("");
             setErrorMessage(null);
@@ -246,166 +308,188 @@ export function CalendarView() {
             const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
             populateFormWithDates(now, oneHourLater);
             setIsModalOpen(true);
-          }}
-          className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
+            }}
+            className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
         >
-          <Plus className="h-4 w-4" /> Create Event
+            <Plus className="h-4 w-4" /> Create Event
         </button>
-      </div>
+        </div>
 
-      <div className="flex-1 min-h-[70vh]">
+        <div className="flex-1 min-h-[70vh]">
         <Calendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          view={view}
-          onView={(newView) => setView(newView)}
-          date={date}
-          onNavigate={(newDate) => setDate(newDate)}
-          selectable
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={handleSelectEvent}
-          style={{ height: "75vh" }}
-          eventPropGetter={() => ({
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            view={view}
+            onView={(newView) => setView(newView)}
+            date={date}
+            onNavigate={(newDate) => setDate(newDate)}
+            selectable
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            style={{ height: "75vh" }}
+            eventPropGetter={() => ({
             className:
-              "!bg-blue-600 !text-white !rounded-md !px-2 !py-0.5 !text-xs !font-medium !border-none !shadow-sm",
-          })}
+                "!bg-blue-600 !text-white !rounded-md !px-2 !py-0.5 !text-xs !font-medium !border-none !shadow-sm",
+            })}
         />
-      </div>
+        </div>
 
-      {isModalOpen && (
+        {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl relative">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl relative">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              {editingEventId ? "Edit Event" : "Plan New Event"}
+                {editingEventId ? "Edit Event" : "Plan New Event"}
             </h3>
 
             {errorMessage && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-xs font-medium">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-xs font-medium">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{errorMessage}</span>
-              </div>
+                </div>
             )}
 
             <form onSubmit={handleSaveEventSubmit} className="flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                  Event Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={isSubmitting}
-                  placeholder="e.g. Design Sync / Code Deploy"
-                  value={newEventTitle}
-                  onChange={(e) => setNewEventTitle(e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100"
-                />
-              </div>
-
-              {/* Clean Date Picker */}
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  disabled={isSubmitting}
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100"
-                />
-              </div>
-
-              {/* Time Selection with Dropdowns */}
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                    Start Time
-                  </label>
-                  <select
+                <label className="text-xs font-semibold text-neutral-500 block mb-1">
+                    Event Title
+                </label>
+                <input
+                    type="text"
+                    required
+                    disabled={isBusy}
+                    placeholder="e.g. Design Sync / Code Deploy"
+                    value={newEventTitle}
+                    onChange={(e) => setNewEventTitle(e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100"
+                />
+                </div>
+
+                {/* Clean Date Picker */}
+                <div>
+                <label className="text-xs font-semibold text-neutral-500 block mb-1">
+                    Date
+                </label>
+                <input
+                    type="date"
+                    required
+                    disabled={isBusy}
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100"
+                />
+                </div>
+
+                {/* Time Selection with Dropdowns */}
+                <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="text-xs font-semibold text-neutral-500 block mb-1">
+                        Start Time
+                    </label>
+                    <select
                     value={startTime}
-                    disabled={isSubmitting}
+                    disabled={isBusy}
                     onChange={(e) => setStartTime(e.target.value)}
                     className="w-full border border-neutral-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-neutral-900 bg-white disabled:bg-neutral-100"
-                  >
+                    >
                     {TIME_SLOTS.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
+                        <option key={slot.value} value={slot.value}>
                         {slot.label}
-                      </option>
+                        </option>
                     ))}
-                  </select>
+                    </select>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                    End Time
-                  </label>
-                  <select
+                    <label className="text-xs font-semibold text-neutral-500 block mb-1">
+                        End Time
+                    </label>
+                    <select
                     value={endTime}
-                    disabled={isSubmitting}
+                    disabled={isBusy}
                     onChange={(e) => setEndTime(e.target.value)}
                     className="w-full border border-neutral-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-neutral-900 bg-white disabled:bg-neutral-100"
-                  >
+                    >
                     {TIME_SLOTS.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
+                        <option key={slot.value} value={slot.value}>
                         {slot.label}
-                      </option>
+                        </option>
                     ))}
-                  </select>
+                    </select>
                 </div>
-              </div>
+                </div>
 
-              {/* Quick Duration Pills */}
-              <div>
+                {/* Quick Duration Pills */}
+                <div>
                 <label className="text-xs font-semibold text-neutral-400 block mb-1.5 flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Quick Duration
+                    <Clock className="h-3 w-3" /> Quick Duration
                 </label>
                 <div className="flex gap-2">
-                  {DURATION_PRESETS.map((preset) => (
+                    {DURATION_PRESETS.map((preset) => (
                     <button
-                      key={preset.label}
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => applyDurationPreset(preset.minutes)}
-                      className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-200 text-neutral-700 bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-300 transition-colors"
+                        key={preset.label}
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => applyDurationPreset(preset.minutes)}
+                        className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-200 text-neutral-700 bg-neutral-50 hover:bg-neutral-100 hover:border-neutral-300 transition-colors"
                     >
-                      +{preset.label}
+                        +{preset.label}
                     </button>
-                  ))}
+                    ))}
                 </div>
-              </div>
+                </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t mt-2">
+                <div className={`flex items-center pt-2 border-t mt-2 ${editingEventId ? "justify-between" : "justify-end"}`}>
+                {editingEventId && (
+                    <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={handleDeleteEvent}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                    >
+                        {isDeleting ? (
+                        <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Deleting...
+                        </>
+                        ) : (
+                        <>
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                        </>
+                        )}
+                    </button>
+                )}
+                <div className="flex gap-2">
                 <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg disabled:opacity-50"
+                    type="button"
+                    disabled={isBusy}
+                    onClick={closeModal}
+                    className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg disabled:opacity-50"
                 >
-                  Cancel
+                    Cancel
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-sm font-medium bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    type="submit"
+                    disabled={isBusy}
+                    className="px-4 py-2 text-sm font-medium bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {isSubmitting ? (
+                    {isSubmitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
                     </>
-                  ) : (
+                    ) : (
                     "Save Event"
-                  )}
+                    )}
                 </button>
-              </div>
+                </div>
+                </div>
             </form>
-          </div>
+            </div>
         </div>
-      )}
+        )}
     </div>
-  );
+    );
 }

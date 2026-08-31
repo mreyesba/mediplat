@@ -96,6 +96,12 @@ class UpdateEvent(BaseModel):
     start: datetime | None = None
     end: datetime | None = None
 
+class EventResponse(BaseModel):
+    id : int
+    title: str
+    start: datetime
+    end: datetime
+
 # Secure cookie validation
     
 def get_current_user(request: Request) -> str:
@@ -490,7 +496,7 @@ def add_entry(
     return {"status": "success", "message": "Event added", "id": new_event.id}
 
 @app.put("/api/update_event")
-def update_entry(
+def update_event(
     params: UpdateEvent, 
     current_user: str = Depends(get_current_user), 
     db: Session = Depends(get_db)
@@ -557,3 +563,71 @@ def update_entry(
     
     return {"status": "success", "message": "Event updated"}
 
+
+@app.delete("/api/delete_event")
+def delete_event(
+    id: int, 
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    logger.info("Update event.")
+
+    current_user_obj = db.query(models.UserTest).filter(
+        models.UserTest.username == current_user
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+    event_obj = db.query(models.EventTest).filter(
+        models.EventTest.id == id
+    ).first()
+
+    if not event_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found."
+        )
+
+    # Optional: Verify the current user actually owns this event
+    if event_obj.creator_id != current_user_obj.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to edit this event."
+        )
+
+    db.delete(event_obj)
+
+    db.commit()
+
+    return {"status": "success", "message": "Event deleted"}
+
+@app.get("/api/get_events", response_model=List[EventResponse])
+def get_events(
+    current_user: str = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    logger.info("Get events.")
+
+    current_user_obj = db.query(models.UserTest).filter(
+        models.UserTest.username == current_user
+    ).first()
+
+    if not current_user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found."
+        )
+
+        # Query patients belonging to this provider, eagerly loading their entries
+    events = (
+        db.query(models.EventTest)
+        .filter(models.EventTest.creator_id == current_user_obj.id)
+        .distinct()
+        .all()
+    )
+
+    return events
