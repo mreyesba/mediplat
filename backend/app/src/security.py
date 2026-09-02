@@ -8,7 +8,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is required. "
+        "Set it in backend/app/.env (see .env.example)."
+    )
+
+ALGORITHM = "HS256"
 
 def hash_password(plain_password: str) -> str:
     """

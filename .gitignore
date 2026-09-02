@@ -32,6 +32,11 @@ dist-ssr
 # Local UV Environments
 .venv/
 
+# Environment secrets
+.env
+.env.*
+!.env.example
+
 # Database Files
 *.db
 *.sqlite3

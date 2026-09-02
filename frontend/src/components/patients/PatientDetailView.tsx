@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Patient } from "./types";
 import { CreateEntryForm } from "./CreateEntryForm";
 
@@ -11,6 +11,8 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   patient,
   onRefreshData,
 }) => {
+    const [isAddingEntry, setIsAddingEntry] = useState(false);
+
     return (
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             {/* Patient Header */}
@@ -25,13 +27,28 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 <span>Sex: <strong className="text-slate-700 uppercase">{patient.sex}</strong></span>
                 </div>
             </div>
+            <button
+                onClick={() => setIsAddingEntry(true)}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition shrink-0"
+            >
+                + Add New Entry
+            </button>
             </div>
 
-            {/* Add New Entry */}
-            <CreateEntryForm
-            patientIdentifier={patient.identifier}
-            onEntryAdded={onRefreshData}
-            />
+            {isAddingEntry && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[90vw] h-[85vh] max-w-5xl flex flex-col overflow-hidden">
+                        <CreateEntryForm
+                            patientIdentifier={patient.identifier}
+                            onEntryAdded={() => {
+                                setIsAddingEntry(false);
+                                onRefreshData();
+                            }}
+                            onCancel={() => setIsAddingEntry(false)}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Entry History */}
             <div className="space-y-3">
