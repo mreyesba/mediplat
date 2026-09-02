@@ -1,9 +1,19 @@
 from datetime import datetime, timedelta, timezone
+import os
 import jwt
 import bcrypt
+from dotenv import load_dotenv
 
-# CRITICAL SECURITY NOTE: In production, load this from an environment variable (.env)
-SECRET_KEY = "super-secret-local-dev-key-change-in-production-mediplat-vibes"
+# Load the .env file
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is required. "
+        "Set it in backend/app/.env (see .env.example)."
+    )
+
 ALGORITHM = "HS256"
 
 def hash_password(plain_password: str) -> str:

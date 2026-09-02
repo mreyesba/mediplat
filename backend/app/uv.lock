@@ -43,6 +43,7 @@ dependencies = [
     { name = "passlib" },
     { name = "pydantic", extra = ["email"] },
     { name = "pyjwt" },
+    { name = "python-dotenv" },
     { name = "sqlalchemy" },
 ]
 
@@ -61,6 +62,7 @@ requires-dist = [
     { name = "passlib", specifier = ">=1.7.4" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.13.4" },
     { name = "pyjwt", specifier = ">=2.13.0" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "sqlalchemy", specifier = ">=2.0.51" },
 ]
 
