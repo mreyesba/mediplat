@@ -140,8 +140,8 @@ def user_login(
 
     logger.info(f"Login attempt received for username: {clean_username}")
     
-    existing_user = db.query(models.UserTest).filter(
-        models.UserTest.username == clean_username
+    existing_user = db.query(models.User).filter(
+        models.User.username == clean_username
     ).first()
 
     if existing_user is None:
@@ -177,13 +177,13 @@ def validate_email(
     params: ValidateEmail, 
     db: Session = Depends(get_db)
 ):
-    # Query the UserTest table to see if a row matches the incoming username
+    # Query the User table to see if a row matches the incoming username
     clean_email = params.email.strip().lower()
 
     logger.info(f"Validating email existence: {clean_email}")
     
-    existing_user = db.query(models.UserTest).filter(
-        models.UserTest.email == clean_email
+    existing_user = db.query(models.User).filter(
+        models.User.email == clean_email
     ).first()
 
     # If existing_user is not None, it means the title is already in SQLite
@@ -202,13 +202,13 @@ def validate_user(
     params: ValidateUsername, 
     db: Session = Depends(get_db)
 ):
-    # Query the UserTest table to see if a row matches the incoming username
+    # Query the User table to see if a row matches the incoming username
     clean_username = params.username.strip().lower()
 
     logger.info(f"Validating username availability: {clean_username}")
     
-    existing_user = db.query(models.UserTest).filter(
-        models.UserTest.username == clean_username
+    existing_user = db.query(models.User).filter(
+        models.User.username == clean_username
     ).first()
 
     # If existing_user is not None, it means the title is already in SQLite
@@ -232,8 +232,8 @@ def register(
 
     logger.info(f"Registering new user: {clean_username}")
 
-    duplicate_check = db.query(models.UserTest).filter(
-        (models.UserTest.username == clean_username) | (models.UserTest.email == clean_email)
+    duplicate_check = db.query(models.User).filter(
+        (models.User.username == clean_username) | (models.User.email == clean_email)
     ).first()
 
     if duplicate_check:
@@ -244,7 +244,7 @@ def register(
     
     secure_hashed_password = hash_password(params.password)
     
-    new_user = models.UserTest(
+    new_user = models.User(
         username=clean_username,
         email=clean_email,
         password=secure_hashed_password,
@@ -254,7 +254,7 @@ def register(
     db.add(new_user)
     db.flush()
 
-    new_user_info = models.UserInfoTest(
+    new_user_info = models.UserInfo(
         user_id = new_user.id,
         first_name = params.first_name.strip(),
         last_name = params.last_name.strip(),
@@ -275,9 +275,9 @@ def get_authenticated_profile(
     db: Session = Depends(get_db)
 ):
     """A secure private endpoint. Only viewable if a valid httpOnly cookie is present."""
-    user_info = db.query(models.UserInfoTest)\
-        .join(models.UserTest, models.UserInfoTest.user_id == models.UserTest.id)\
-        .filter(models.UserTest.username == current_user)\
+    user_info = db.query(models.UserInfo)\
+        .join(models.User, models.UserInfo.user_id == models.User.id)\
+        .filter(models.User.username == current_user)\
         .first()
         
     return {
@@ -310,13 +310,13 @@ def patient_register(
 ):
     logger.info("Patient register.")
 
-    duplicate_check = db.query(models.PatientTest).filter(
-        (models.PatientTest.identifier == params.identifier)
+    duplicate_check = db.query(models.Patient).filter(
+        (models.Patient.identifier == params.identifier)
     ).first()
 
 
     if not duplicate_check:
-        new_patient = models.PatientTest(
+        new_patient = models.Patient(
             first_name = params.first_name.strip(),
             last_name = params.last_name.strip(),
             dob = params.dob,
@@ -328,8 +328,8 @@ def patient_register(
         db.flush()
         db.commit()
 
-    current_user_obj = db.query(models.UserTest).filter(
-        (models.UserTest.username == current_user)
+    current_user_obj = db.query(models.User).filter(
+        (models.User.username == current_user)
     ).first()
 
     if not current_user_obj:
@@ -340,13 +340,13 @@ def patient_register(
     
     current_user_id = current_user_obj.id
 
-    existing_entry = db.query(models.PatientEntryTest).filter(
-        ((models.PatientEntryTest.patient_identifier == params.identifier) &
-         (models.PatientEntryTest.provider_identifier == current_user_id))
+    existing_entry = db.query(models.PatientEntry).filter(
+        ((models.PatientEntry.patient_identifier == params.identifier) &
+         (models.PatientEntry.provider_identifier == current_user_id))
     ).first()
         
     if not existing_entry:
-        first_entry = models.PatientEntryTest(
+        first_entry = models.PatientEntry(
             patient_identifier = params.identifier,
             provider_identifier = current_user_id,
             info = "First entry"
@@ -366,8 +366,8 @@ def add_entry(
 ):
     logger.info("Patient register.")
 
-    patient = db.query(models.PatientTest).filter(
-        (models.PatientTest.identifier == params.patient_identifier)
+    patient = db.query(models.Patient).filter(
+        (models.Patient.identifier == params.patient_identifier)
     ).first()
 
     if not patient:
@@ -376,8 +376,8 @@ def add_entry(
             detail="Registration failed."
         )
 
-    current_user_obj = db.query(models.UserTest).filter(
-        (models.UserTest.username == current_user)
+    current_user_obj = db.query(models.User).filter(
+        (models.User.username == current_user)
     ).first()
 
     if not current_user_obj:
@@ -388,7 +388,7 @@ def add_entry(
     
     current_user_id = current_user_obj.id
 
-    new_entry = models.PatientEntryTest(
+    new_entry = models.PatientEntry(
         patient_identifier = patient.identifier,
         provider_identifier = current_user_id,
         info = params.info
@@ -408,8 +408,8 @@ def get_entry_count(
     logger.info("Get entry count.")
     print("get count")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        (models.UserTest.username == current_user)
+    current_user_obj = db.query(models.User).filter(
+        (models.User.username == current_user)
     ).first()
 
     if not current_user_obj:
@@ -420,8 +420,8 @@ def get_entry_count(
     
     current_user_id = current_user_obj.id
     
-    entry_count = db.query(models.PatientEntryTest).filter(
-        (models.PatientEntryTest.provider_identifier == current_user_id)
+    entry_count = db.query(models.PatientEntry).filter(
+        (models.PatientEntry.provider_identifier == current_user_id)
     ).count()
 
     return {
@@ -435,8 +435,8 @@ def get_patients(
 ):
     logger.info("Fetching patients and entries for current provider.")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        models.UserTest.username == current_user
+    current_user_obj = db.query(models.User).filter(
+        models.User.username == current_user
     ).first()
 
     if not current_user_obj:
@@ -447,10 +447,10 @@ def get_patients(
 
     # Query patients belonging to this provider, eagerly loading their entries
     patients = (
-        db.query(models.PatientTest)
-        .join(models.PatientEntryTest)
-        .filter(models.PatientEntryTest.provider_identifier == current_user_obj.id)
-        .options(joinedload(models.PatientTest.entries))  # Fetch entries in the same query
+        db.query(models.Patient)
+        .join(models.PatientEntry)
+        .filter(models.PatientEntry.provider_identifier == current_user_obj.id)
+        .options(joinedload(models.Patient.entries))  # Fetch entries in the same query
         .distinct()
         .all()
     )
@@ -465,8 +465,8 @@ def add_entry(
 ):
     logger.info("Create event.")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        models.UserTest.username == current_user
+    current_user_obj = db.query(models.User).filter(
+        models.User.username == current_user
     ).first()
 
     if not current_user_obj:
@@ -482,7 +482,7 @@ def add_entry(
             detail="Invalid time interval."
         )
 
-    new_event = models.EventTest(
+    new_event = models.Event(
         title=params.title,
         creator_id=current_user_obj.id,
         start=params.start,
@@ -503,8 +503,8 @@ def update_event(
 ):
     logger.info("Update event.")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        models.UserTest.username == current_user
+    current_user_obj = db.query(models.User).filter(
+        models.User.username == current_user
     ).first()
 
     if not current_user_obj:
@@ -513,8 +513,8 @@ def update_event(
             detail="User not found."
         )
 
-    event_obj = db.query(models.EventTest).filter(
-        models.EventTest.id == params.id
+    event_obj = db.query(models.Event).filter(
+        models.Event.id == params.id
     ).first()
 
     if not event_obj:
@@ -572,8 +572,8 @@ def delete_event(
 ):
     logger.info("Update event.")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        models.UserTest.username == current_user
+    current_user_obj = db.query(models.User).filter(
+        models.User.username == current_user
     ).first()
 
     if not current_user_obj:
@@ -582,8 +582,8 @@ def delete_event(
             detail="User not found."
         )
 
-    event_obj = db.query(models.EventTest).filter(
-        models.EventTest.id == id
+    event_obj = db.query(models.Event).filter(
+        models.Event.id == id
     ).first()
 
     if not event_obj:
@@ -612,8 +612,8 @@ def get_events(
 ):
     logger.info("Get events.")
 
-    current_user_obj = db.query(models.UserTest).filter(
-        models.UserTest.username == current_user
+    current_user_obj = db.query(models.User).filter(
+        models.User.username == current_user
     ).first()
 
     if not current_user_obj:
@@ -624,8 +624,8 @@ def get_events(
 
         # Query patients belonging to this provider, eagerly loading their entries
     events = (
-        db.query(models.EventTest)
-        .filter(models.EventTest.creator_id == current_user_obj.id)
+        db.query(models.Event)
+        .filter(models.Event.creator_id == current_user_obj.id)
         .distinct()
         .all()
     )

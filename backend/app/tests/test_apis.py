@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
-from models import UserInfoTest, SexEnum, UserTest
+from models import UserInfo, SexEnum, User
 from main import app, get_db
 
 # Isolated testing engine, pointed at the postgres-test container
@@ -78,7 +78,7 @@ def db():
 
 def test_userinfo_valid_user(db: Session):
     # 1. Create the parent user record first
-    parent_user = UserTest(
+    parent_user = User(
         username="john_doe",
         email="john@example.com",
         password="hashedpassword123"
@@ -87,7 +87,7 @@ def test_userinfo_valid_user(db: Session):
     db.flush() # This tells SQLite to generate an auto-incrementing ID for parent_user
     
     # 2. Attach the profile to the real generated parent ID
-    new_user_info = UserInfoTest(
+    new_user_info = UserInfo(
         user_id=parent_user.id, # <-- Dynamic reference to a real user
         first_name="John",
         last_name="Doe",
@@ -97,14 +97,14 @@ def test_userinfo_valid_user(db: Session):
     db.flush()
     
     # 3. Assert it was saved correctly
-    found = db.query(UserInfoTest).filter(UserInfoTest.user_id == parent_user.id).first()
+    found = db.query(UserInfo).filter(UserInfo.user_id == parent_user.id).first()
     assert found is not None
     assert found.first_name == "John"
 
 # Test SQL operations
 
 def test_existing_username(db: Session):
-    new_user = UserTest(
+    new_user = User(
         username="test_username",
         email="test_email",
         password="dummypass1234"
@@ -114,7 +114,7 @@ def test_existing_username(db: Session):
 
     db.commit()
 
-    new_user2 = UserTest(
+    new_user2 = User(
         username="test_username",
         email="test_email2",
         password="dummypass1234"
@@ -127,7 +127,7 @@ def test_existing_username(db: Session):
 
 
 def test_existing_email(db: Session):
-    new_user = UserTest(
+    new_user = User(
         username="test_username",
         email="test_email",
         password="dummypass1234"
@@ -137,7 +137,7 @@ def test_existing_email(db: Session):
 
     db.commit()
 
-    new_user2 = UserTest(
+    new_user2 = User(
         username="test_username2",
         email="test_email",
         password="dummypass1234"

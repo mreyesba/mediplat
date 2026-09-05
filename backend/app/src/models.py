@@ -15,8 +15,8 @@ class UserRole(str, enum.Enum):
     FRONT_DESK = "front_desk"
     CLINIC_ADMIN = "clinic_admin"
 
-class UserTest(Base):
-    __tablename__ = "user_test"
+class User(Base):
+    __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -25,72 +25,72 @@ class UserTest(Base):
     role = Column(Enum(UserRole), default=UserRole.PATIENT)
 
     # Relationships
-    staff_info = relationship("UserInfoTest", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    patient_profile = relationship("PatientTest", back_populates="user", uselist=False)
-    events = relationship("EventTest", back_populates="creator", cascade="all, delete-orphan")
+    staff_info = relationship("UserInfo", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    patient_profile = relationship("Patient", back_populates="user", uselist=False)
+    events = relationship("Event", back_populates="creator", cascade="all, delete-orphan")
 
     def has_role(self, role_name: str | UserRole) -> bool:
         if isinstance(role_name, UserRole):
             return self.role == role_name
         return self.role.value == role_name or self.role == role_name
 
-class UserInfoTest(Base):
-    __tablename__ = "user_info_test"
+class UserInfo(Base):
+    __tablename__ = "user_info"
 
-    user_id = Column(Integer, ForeignKey("user_test.id"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
 
     first_name = Column(String)
     last_name = Column(String)
     dob = Column(Date)
 
-    user = relationship("UserTest", back_populates="staff_info")
+    user = relationship("User", back_populates="staff_info")
 
-class PatientTest(Base):
-    __tablename__ = "patient_test"
+class Patient(Base):
+    __tablename__ = "patient"
 
     identifier = Column(String, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("user_test.id"), nullable=True, unique=True)
-    
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=True, unique=True)
+
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     dob = Column(Date, nullable=False)
     sex = Column(Enum(SexEnum), default=SexEnum.PREFER_NOT_TO_SAY)
 
-    user = relationship("UserTest", back_populates="patient_profile")
-    entries = relationship("PatientEntryTest", back_populates="patient", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="patient_profile")
+    entries = relationship("PatientEntry", back_populates="patient", cascade="all, delete-orphan")
 
 # MIGHT WANT TO UNIFY WITH USER
 
 # 1. Updated Database Model
-class PatientEntryTest(Base):
-    __tablename__ = "patient_registry_test"
+class PatientEntry(Base):
+    __tablename__ = "patient_registry"
 
     id = Column(Integer, primary_key=True, autoincrement=True) # 👈 Add surrogate PK
-    
-    patient_identifier = Column(String, ForeignKey("patient_test.identifier"))
-    
-    provider_identifier = Column(Integer, ForeignKey("user_test.id"))
-    
+
+    patient_identifier = Column(String, ForeignKey("patient.identifier"))
+
+    provider_identifier = Column(Integer, ForeignKey("user.id"))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     info = Column(String)
 
-    patient = relationship("PatientTest", back_populates="entries")
-    provider = relationship("UserTest")
+    patient = relationship("Patient", back_populates="entries")
+    provider = relationship("User")
 
 # 1. Updated Database Model
-class EventTest(Base):
-    __tablename__ = "event_test"
+class Event(Base):
+    __tablename__ = "event"
 
     id = Column(Integer, primary_key=True, autoincrement=True) # 👈 Add surrogate PK
 
     title = Column(String)
-    
-    creator_id = Column(Integer, ForeignKey("user_test.id"))
-    
+
+    creator_id = Column(Integer, ForeignKey("user.id"))
+
     start = Column(DateTime(timezone=True))
-    
+
     end = Column(DateTime(timezone=True))
 
-    creator = relationship("UserTest", back_populates="events")
+    creator = relationship("User", back_populates="events")
