@@ -1,28 +1,26 @@
+import os
+
 import pytest
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.engine import Engine   
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
-from models import UserInfoTest, SexEnum, UserTest
+from models import UserInfo, SexEnum, User
 from main import app, get_db
 
-# 2. Define the isolated testing engine right here
-# Changing this to an in-memory database configuration
-TEST_DATABASE_URL = "sqlite:///:memory:"
-test_engine = create_engine(
-    TEST_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-)
-
-# 🚀 FORCE SQLite to enforce Foreign Keys
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# Isolated testing engine, pointed at the postgres-test container
+# (docker-compose.yml) — never the dev database.
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if not TEST_DATABASE_URL:
+    raise RuntimeError(
+        "TEST_DATABASE_URL environment variable is required to run tests. "
+        "Set it in .env at the repo root (see .env.example) and make sure "
+        "the postgres-test container is running "
+        "(docker compose up -d postgres-test)."
+    )
+test_engine = create_engine(TEST_DATABASE_URL)
 
 # 1. Provide a TestClient that uses our isolated database session
 @pytest.fixture
@@ -41,17 +39,22 @@ def client(db):
     # Clean up overrides after the test completes so production stays safe
     app.dependency_overrides.clear()
 
-# 3. Create a single persistent connection to keep the RAM database alive
+# 3. Create tables once for the whole test session, on a single connection
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     connection = test_engine.connect()
-    
+
     # This uses your real Base that all models inherit from
     Base.metadata.create_all(bind=connection)
-    
+    # Postgres connections are real, separate transactions (unlike the single
+    # shared SQLite connection this used to run against) — commit so the
+    # schema is visible to the other connections tests actually use.
+    connection.commit()
+
     yield connection
-    
+
     Base.metadata.drop_all(bind=connection)
+    connection.commit()
     connection.close()
 
 # 4. Provide a clean, isolated database transaction per test function
@@ -75,7 +78,7 @@ def db():
 
 def test_userinfo_valid_user(db: Session):
     # 1. Create the parent user record first
-    parent_user = UserTest(
+    parent_user = User(
         username="john_doe",
         email="john@example.com",
         password="hashedpassword123"
@@ -84,7 +87,7 @@ def test_userinfo_valid_user(db: Session):
     db.flush() # This tells SQLite to generate an auto-incrementing ID for parent_user
     
     # 2. Attach the profile to the real generated parent ID
-    new_user_info = UserInfoTest(
+    new_user_info = UserInfo(
         user_id=parent_user.id, # <-- Dynamic reference to a real user
         first_name="John",
         last_name="Doe",
@@ -94,14 +97,14 @@ def test_userinfo_valid_user(db: Session):
     db.flush()
     
     # 3. Assert it was saved correctly
-    found = db.query(UserInfoTest).filter(UserInfoTest.user_id == parent_user.id).first()
+    found = db.query(UserInfo).filter(UserInfo.user_id == parent_user.id).first()
     assert found is not None
     assert found.first_name == "John"
 
 # Test SQL operations
 
 def test_existing_username(db: Session):
-    new_user = UserTest(
+    new_user = User(
         username="test_username",
         email="test_email",
         password="dummypass1234"
@@ -111,7 +114,7 @@ def test_existing_username(db: Session):
 
     db.commit()
 
-    new_user2 = UserTest(
+    new_user2 = User(
         username="test_username",
         email="test_email2",
         password="dummypass1234"
@@ -124,7 +127,7 @@ def test_existing_username(db: Session):
 
 
 def test_existing_email(db: Session):
-    new_user = UserTest(
+    new_user = User(
         username="test_username",
         email="test_email",
         password="dummypass1234"
@@ -134,7 +137,7 @@ def test_existing_email(db: Session):
 
     db.commit()
 
-    new_user2 = UserTest(
+    new_user2 = User(
         username="test_username2",
         email="test_email",
         password="dummypass1234"
