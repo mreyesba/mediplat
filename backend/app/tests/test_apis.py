@@ -1,28 +1,26 @@
+import os
+
 import pytest
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.engine import Engine   
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
 from models import UserInfoTest, SexEnum, UserTest
 from main import app, get_db
 
-# 2. Define the isolated testing engine right here
-# Changing this to an in-memory database configuration
-TEST_DATABASE_URL = "sqlite:///:memory:"
-test_engine = create_engine(
-    TEST_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
-)
-
-# 🚀 FORCE SQLite to enforce Foreign Keys
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+# Isolated testing engine, pointed at the postgres-test container
+# (docker-compose.yml) — never the dev database.
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+if not TEST_DATABASE_URL:
+    raise RuntimeError(
+        "TEST_DATABASE_URL environment variable is required to run tests. "
+        "Set it in .env at the repo root (see .env.example) and make sure "
+        "the postgres-test container is running "
+        "(docker compose up -d postgres-test)."
+    )
+test_engine = create_engine(TEST_DATABASE_URL)
 
 # 1. Provide a TestClient that uses our isolated database session
 @pytest.fixture
@@ -41,17 +39,22 @@ def client(db):
     # Clean up overrides after the test completes so production stays safe
     app.dependency_overrides.clear()
 
-# 3. Create a single persistent connection to keep the RAM database alive
+# 3. Create tables once for the whole test session, on a single connection
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     connection = test_engine.connect()
-    
+
     # This uses your real Base that all models inherit from
     Base.metadata.create_all(bind=connection)
-    
+    # Postgres connections are real, separate transactions (unlike the single
+    # shared SQLite connection this used to run against) — commit so the
+    # schema is visible to the other connections tests actually use.
+    connection.commit()
+
     yield connection
-    
+
     Base.metadata.drop_all(bind=connection)
+    connection.commit()
     connection.close()
 
 # 4. Provide a clean, isolated database transaction per test function

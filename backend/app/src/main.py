@@ -17,7 +17,7 @@ import models
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("backend_logger")
 
-# Automatically build SQLite tables on startup
+# Automatically build database tables on startup
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Local Dev Suite API")

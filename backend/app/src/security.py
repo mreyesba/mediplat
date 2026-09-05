@@ -1,18 +1,7 @@
 from datetime import datetime, timedelta, timezone
-import os
 import jwt
 import bcrypt
-from dotenv import load_dotenv
-
-# Load the .env file
-load_dotenv()
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-if not SECRET_KEY:
-    raise RuntimeError(
-        "SECRET_KEY environment variable is required. "
-        "Set it in backend/app/.env (see .env.example)."
-    )
+from config import SECRET_KEY
 
 ALGORITHM = "HS256"
 
