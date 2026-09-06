@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from './apiConfig';
 
 interface NavbarProps {
     user: { username: string; first_name: string } | null;
     setUser: (user: null) => void;
 }
 
-function Navbar({ user, setUser }: NavbarProps) {
+function Navbar({ user }: NavbarProps) {
     const handleLogout = async () => {
         try {
-            const response = await fetch('/api/logout', {
+            const response = await fetch(`${API_BASE_URL}/api/logout`, {
                 method: 'POST',
                 credentials: 'include', // CRITICAL: Permits cookie modifications
             });

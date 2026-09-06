@@ -24,7 +24,7 @@ const renderWithProviders = (ui: React.ReactElement, { route = '/account' } = {}
 
 // 1. MSW Network Handlers
 const mockHandlers = [
-    http.get('/api/me', async ({ request }) => {
+    http.get('/api/me', async () => {
         return new HttpResponse(null, { status: 401 });
     }),
 

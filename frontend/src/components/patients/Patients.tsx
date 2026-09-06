@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import type { Patient } from "./types";
 import { CreatePatientForm } from "./CreatePatientForm";
 import { PatientDetailView } from "./PatientDetailView";
+import { API_BASE_URL } from "../../apiConfig";
 
 function Patients() {
     const [patients, setPatients] = useState<Patient[]>([]);
@@ -15,7 +16,7 @@ function Patients() {
         setIsLoading(true);
         setErrorMessage("");
         try {
-            const res = await fetch("/api/get_patients", {
+            const res = await fetch(`${API_BASE_URL}/api/get_patients`, {
                 credentials: "include"
             });
 
