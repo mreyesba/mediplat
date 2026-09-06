@@ -69,4 +69,8 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
 
-      - run: npm run test
+      # vitest browser mode has a known, still-open upstream flake where
+      # Vite's dependency optimizer reloads mid-run on a cold cache and
+      # breaks the first test import (vitest-dev/vitest#7333, #8447) — not
+      # our code. Retrying once is the documented practical workaround.
+      - run: npm run test || npm run test
