@@ -2,6 +2,7 @@ import './FormsPage.css';
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { API_BASE_URL } from './apiConfig';
 
 interface FormsPageProps {
   type: 'login' | 'signup';
@@ -49,7 +50,7 @@ function FormsPage({ type }: FormsPageProps) {
         try {
             if (step === 1) {
                 // Step 1: Validate Email existence
-                const response = await fetch('/api/validate_email', {
+                const response = await fetch(`${API_BASE_URL}/api/validate_email`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -64,7 +65,7 @@ function FormsPage({ type }: FormsPageProps) {
                 }
             } else if (step === 2) {
                 // Step 2: Validate Username availability
-                const response = await fetch('/api/validate_user', {
+                const response = await fetch(`${API_BASE_URL}/api/validate_user`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -84,7 +85,7 @@ function FormsPage({ type }: FormsPageProps) {
                     return;
                 }
                 // Step 3: Send entire package to save to SQLite database
-                const response = await fetch('/api/register', {
+                const response = await fetch(`${API_BASE_URL}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -119,7 +120,7 @@ function FormsPage({ type }: FormsPageProps) {
         setErrorMessage('');
     
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

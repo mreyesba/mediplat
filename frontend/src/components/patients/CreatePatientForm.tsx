@@ -1,4 +1,5 @@
 import React, { useState, useId } from "react";
+import { API_BASE_URL } from "../../apiConfig";
 
 interface CreatePatientFormProps {
     onSuccess: () => void;
@@ -30,7 +31,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
         setIsSubmitting(true);
 
         try {
-            const response = await fetch("/api/patient_register", {
+            const response = await fetch(`${API_BASE_URL}/api/patient_register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

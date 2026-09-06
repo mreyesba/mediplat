@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views, type View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
-import enUS from "date-fns/locale/en-US";
+import { enUS } from "date-fns/locale/en-US";
 import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
+import { API_BASE_URL } from "../../apiConfig";
 
 const locales = { "en-US": enUS };
 
@@ -96,7 +97,7 @@ export function CalendarView() {
     const fetchEvents = async () => {
         setErrorMessage("");
         try {
-            const res = await fetch("/api/get_events", {
+            const res = await fetch(`${API_BASE_URL}/api/get_events`, {
                 credentials: "include"
             });
 
@@ -187,7 +188,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch("/api/update_event", {
+                const response = await fetch(`${API_BASE_URL}/api/update_event`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -227,7 +228,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch("/api/create_event", {
+                const response = await fetch(`${API_BASE_URL}/api/create_event`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -272,7 +273,7 @@ export function CalendarView() {
         setEvents((prev) => prev.filter((evt) => evt.id !== editingEventId));
 
         try {
-            const response = await fetch(`/api/delete_event?id=${editingEventId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/delete_event?id=${editingEventId}`, {
                 method: "DELETE",
                 credentials: "include",
             });
@@ -322,9 +323,9 @@ export function CalendarView() {
             startAccessor="start"
             endAccessor="end"
             view={view}
-            onView={(newView) => setView(newView)}
+            onView={(newView: View) => setView(newView)}
             date={date}
-            onNavigate={(newDate) => setDate(newDate)}
+            onNavigate={(newDate: Date) => setDate(newDate)}
             selectable
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}

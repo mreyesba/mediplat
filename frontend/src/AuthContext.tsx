@@ -5,6 +5,7 @@ import { createContext,
          type ReactNode, 
          type Dispatch, 
          type SetStateAction } from 'react';
+import { API_BASE_URL } from './apiConfig';
 
 // 1. Declare the strict shape of our logged-in user profile metadata
 export interface User {
@@ -26,7 +27,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-    fetch('/api/me', { credentials: 'include' })
+    fetch(`${API_BASE_URL}/api/me`, { credentials: 'include' })
         .then((res) => (res.ok ? res.json() : null))
         .then((data: User | null) => {
             setUser(data);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_BASE_URL } from "../../apiConfig";
 
 interface CreateEntryFormProps {
     patientIdentifier: string;
@@ -23,7 +24,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
         setError("");
 
         try {
-            const response = await fetch("/api/add_entry", {
+            const response = await fetch(`${API_BASE_URL}/api/add_entry`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
