@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
-from models import UserInfo, SexEnum, User
+from models import UserInfo, User, UserRole
 from main import app, get_db
 
 # Isolated testing engine, pointed at the postgres-test container
@@ -81,17 +81,17 @@ def test_userinfo_valid_user(db: Session):
     parent_user = User(
         username="john_doe",
         email="john@example.com",
-        password="hashedpassword123"
+        password="hashedpassword123",
+        role=UserRole.PROVIDER
     )
     db.add(parent_user)
     db.flush() # This tells SQLite to generate an auto-incrementing ID for parent_user
-    
+
     # 2. Attach the profile to the real generated parent ID
     new_user_info = UserInfo(
         user_id=parent_user.id, # <-- Dynamic reference to a real user
         first_name="John",
-        last_name="Doe",
-        sex=SexEnum.MALE
+        last_name="Doe"
     )
     db.add(new_user_info)
     db.flush()
@@ -159,7 +159,7 @@ def test_api_registration_success(client: TestClient):
         "first_name": "Jane",
         "last_name": "Smith",
         "dob": "1995-05-15",
-        "sex": SexEnum.FEMALE.value
+        "role": UserRole.PROVIDER.value
     }
     
     response = client.post("/api/register", json=registration_payload)
@@ -177,7 +177,7 @@ def test_api_login_sets_secure_cookie(client: TestClient):
         "first_name": "Cookie",
         "last_name": "Monster",
         "dob": "1990-01-01",
-        "sex": SexEnum.MALE.value
+        "role": UserRole.PROVIDER.value
     }
     reg_response = client.post("/api/register", json=registration_payload)
     assert reg_response.status_code == 200
@@ -212,7 +212,7 @@ def test_api_validate_username_duplicate(client: TestClient):
         "first_name": "Test",
         "last_name": "Case",
         "dob": "1990-01-01",
-        "sex": SexEnum.MALE.value
+        "role": UserRole.PROVIDER.value
     }
     client.post("/api/register", json=registration_payload)
     
@@ -235,7 +235,7 @@ def test_api_login_invalid_credentials(client: TestClient):
         "first_name": "Test",
         "last_name": "Case",
         "dob": "1990-01-01",
-        "sex": SexEnum.MALE.value
+        "role": UserRole.PROVIDER.value
     }
     client.post("/api/register", json=registration_payload)
     
@@ -260,7 +260,7 @@ def test_api_get_authenticated_profile_success(client: TestClient):
         "first_name": "Alex",
         "last_name": "Vance",
         "dob": "1992-08-24",
-        "sex": SexEnum.FEMALE.value
+        "role": UserRole.PROVIDER.value
     }
     client.post("/api/register", json=registration_payload)
     
@@ -303,7 +303,7 @@ def test_api_logout_clears_cookie(client: TestClient):
         "first_name": "Logout",
         "last_name": "Test",
         "dob": "1990-01-01",
-        "sex": SexEnum.MALE.value
+        "role": UserRole.PROVIDER.value
     }
     client.post("/api/register", json=registration_payload)
     

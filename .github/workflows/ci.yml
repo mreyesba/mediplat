@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mediplat
+          POSTGRES_PASSWORD: mediplat_ci_password
+          POSTGRES_DB: mediplat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mediplat -d mediplat_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: backend/app
+    env:
+      # Dummy values — nothing here touches a real service. DATABASE_URL is
+      # only read because config.py requires it at import time; the actual
+      # test suite uses TEST_DATABASE_URL against the service container above.
+      SECRET_KEY: ci_test_secret_key_not_for_production
+      DATABASE_URL: postgresql+psycopg://mediplat:mediplat_ci_password@localhost:5432/mediplat_test
+      TEST_DATABASE_URL: postgresql+psycopg://mediplat:mediplat_ci_password@localhost:5432/mediplat_test
+      DEBUG: "False"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          python-version: "3.14"
+
+      - run: uv sync
+
+      - run: uv run pytest -q
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # Pre-existing lint errors aren't blocking yet — advisory until cleaned up.
+      - run: npm run lint
+        continue-on-error: true
+
+      - run: npx playwright install --with-deps chromium
+
+      # vitest browser mode has a known, still-open upstream flake where
+      # Vite's dependency optimizer reloads mid-run on a cold cache and
+      # breaks the first test import (vitest-dev/vitest#7333, #8447) — not
+      # our code. Retrying once is the documented practical workaround.
+      - run: npm run test || npm run test
