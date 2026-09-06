@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from security import hash_password, verify_password, create_access_token, verify_access_token
 from database import engine, Base, get_db
+from config import ENVIRONMENT, CORS_ORIGINS
 from pydantic import BaseModel
 from datetime import date
 from typing import List
@@ -22,14 +23,20 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Local Dev Suite API")
 
+IS_PRODUCTION = ENVIRONMENT == "production"
+
 # Explicit CORS isolation configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 # Pydantic verification models
 
@@ -164,8 +171,8 @@ def user_login(
         key="access_token",
         value=token,
         httponly=True,  # Crucial: Blocks JavaScript from reading or stealing the token (XSS proof)
-        secure=False,   # Set to True in production to enforce HTTPS tracking context
-        samesite="lax", # Blocks cross-site malicious link clicks from spoofing data (CSRF defense)
+        secure=IS_PRODUCTION,  # Cross-site cookies require Secure — frontend and backend are on different origins in production
+        samesite="none" if IS_PRODUCTION else "lax",  # "none" is required for the cross-origin fetch to carry the cookie at all
         max_age=28800   # Token life expiration in seconds (Matches 8 hours)
     )
 
@@ -294,8 +301,8 @@ def user_logout(response: Response):
         key="access_token",
         value="",
         httponly=True,
-        secure=False,  # Set to True in production
-        samesite="lax",
+        secure=IS_PRODUCTION,
+        samesite="none" if IS_PRODUCTION else "lax",
         max_age=0,     # 0 seconds forces the browser to delete it instantly
         expires=0
     )

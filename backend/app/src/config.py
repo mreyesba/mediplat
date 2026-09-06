@@ -21,3 +21,17 @@ if not DATABASE_URL:
 
 # Off by default — flip on locally to log every SQL statement SQLAlchemy runs.
 DEBUG = os.getenv("DEBUG", "False").strip().lower() in ("1", "true", "yes")
+
+# "development" locally, "production" on the deployed backend — controls
+# cookie security flags (see main.py), independent of the DEBUG SQL logging
+# toggle above.
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+
+# Comma-separated list of origins allowed to call this API with credentials.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
