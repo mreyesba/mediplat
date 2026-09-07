@@ -29,7 +29,7 @@ function Navbar({ user }: NavbarProps) {
         <nav className="top-menu flex items-center justify-between p-4 bg-slate-900 text-white">
             {/* Logo / Brand */}
             <div className="font-bold text-xl">
-                MyBrand
+                CANPER
             </div>
 
             {/* Navigation Links */}
