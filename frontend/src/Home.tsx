@@ -9,13 +9,6 @@ function Home() {
                     With take care of your health!
                 </p>
             </section>
-
-            {/* Other sections of the landing page (Services, Reviews, etc) */}
-            <section className="py-12 text-center">
-                <h2 className="text-2x1 font-semibold">
-                    Our Services
-                </h2>
-            </section>
         </div>
     );
 }
