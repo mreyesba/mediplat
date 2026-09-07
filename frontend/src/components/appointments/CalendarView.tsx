@@ -63,23 +63,10 @@ interface CalendarEvent {
 }
 
 export function CalendarView() {
-    const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-        id: "1",
-        title: "Sync with Design Team",
-        start: new Date(2026, 7, 24, 10, 0),
-        end: new Date(2026, 7, 24, 11, 30),
-    },
-    {
-        id: "2",
-        title: "Project Architecture Review",
-        start: new Date(2026, 7, 26, 14, 0),
-        end: new Date(2026, 7, 26, 16, 0),
-    },
-    ]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
 
     const [view, setView] = useState<View>(Views.WEEK);
-    const [date, setDate] = useState(new Date(2026, 7, 24));
+    const [date, setDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

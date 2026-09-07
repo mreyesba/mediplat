@@ -465,7 +465,7 @@ def get_patients(
     return patients
 
 @app.post("/api/create_event", status_code=status.HTTP_201_CREATED)
-def add_entry(
+def create_event(
     params: CreateEvent, 
     current_user: str = Depends(get_current_user), 
     db: Session = Depends(get_db)
