@@ -16,7 +16,7 @@ function Navbar({ user }: NavbarProps) {
 
             if (response.ok) {
                 // Refresh the page or redirect to clear any lingering memory states
-                window.location.href = '/account'; 
+                window.location.href = '/'; 
             } else {
                 console.error('Logout request rejected by server.');
             }
