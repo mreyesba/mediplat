@@ -2,12 +2,13 @@ import os
 
 import pytest
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError, ProgrammingError
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
-from models import UserInfo, User, UserRole
+from models import UserInfo, User, UserRole, Patient, PatientEntry
+import main as main_module
 from main import app, get_db
 
 # Isolated testing engine, pointed at the postgres-test container
@@ -321,8 +322,110 @@ def test_api_logout_clears_cookie(client: TestClient):
 
     # 3. Verify that the "set-cookie" headers dictate immediate erasure
     set_cookie_header = logout_response.headers.get("set-cookie", "")
-    
+
     # max-age=0 is the reliable, standard indicator for immediate deletion
     assert "max-age=0" in set_cookie_header.lower()
+
+#  Every protected route must reject a request with no session cookie.
+PROTECTED_ROUTES = [
+    ("get", "/api/me", None),
+    ("post", "/api/patient_register", {
+        "first_name": "A", "last_name": "B", "dob": "1990-01-01",
+        "sex": "male", "identifier": "no-auth-test-patient",
+    }),
+    ("post", "/api/add_entry", {"patient_identifier": "no-auth-test-patient", "info": "x"}),
+    ("get", "/api/get_entry_count", None),
+    ("get", "/api/get_patients", None),
+    ("post", "/api/create_event", {
+        "title": "t", "start": "2026-01-01T00:00:00", "end": "2026-01-01T01:00:00",
+    }),
+    ("put", "/api/update_event", {"id": 1, "title": "t"}),
+    ("delete", "/api/delete_event?id=1", None),
+    ("get", "/api/get_events", None),
+]
+
+
+@pytest.mark.parametrize("method,path,body", PROTECTED_ROUTES)
+def test_protected_routes_reject_unauthenticated(client: TestClient, method, path, body):
+    kwargs = {"json": body} if body is not None else {}
+    response = getattr(client, method)(path, **kwargs)
+    assert response.status_code == 401, (
+        f"{method.upper()} {path} returned {response.status_code}, expected 401 "
+        "(no access_token cookie was sent)"
+    )
+
+
+def test_password_never_stored_plaintext(client: TestClient, db: Session):
+    plaintext = "correct_horse_battery_staple"
+    registration_payload = {
+        "username": "plaintext_check_user",
+        "email": "plaintext_check@example.com",
+        "password": plaintext,
+        "first_name": "P",
+        "last_name": "C",
+        "dob": "1990-01-01",
+        "role": UserRole.PROVIDER.value,
+    }
+    response = client.post("/api/register", json=registration_payload)
+    assert response.status_code == 200
+
+    stored_user = db.query(User).filter(User.username == "plaintext_check_user").first()
+    assert stored_user is not None
+    assert stored_user.password != plaintext
+    assert stored_user.password.startswith("$2b$")
+
+
+def test_login_cookie_secure_flag_matches_environment(client: TestClient, monkeypatch):
+    # Dev mode (the default under test): Secure must be absent, SameSite=Lax.
+    client.post("/api/register", json={
+        "username": "secure_flag_dev_user",
+        "email": "secure_flag_dev@example.com",
+        "password": "password123",
+        "first_name": "Dev", "last_name": "User",
+        "dob": "1990-01-01", "role": UserRole.PROVIDER.value,
+    })
+    dev_response = client.post("/api/login", json={
+        "username": "secure_flag_dev_user", "password": "password123",
+    })
+    dev_cookie_header = dev_response.headers.get("set-cookie", "").lower()
+    assert "secure" not in dev_cookie_header
+    assert "samesite=lax" in dev_cookie_header
+
+    # Simulated production mode: Secure must be present, SameSite=None.
+    monkeypatch.setattr(main_module, "IS_PRODUCTION", True)
+
+    client.post("/api/register", json={
+        "username": "secure_flag_prod_user",
+        "email": "secure_flag_prod@example.com",
+        "password": "password123",
+        "first_name": "Prod", "last_name": "User",
+        "dob": "1990-01-01", "role": UserRole.PROVIDER.value,
+    })
+    prod_response = client.post("/api/login", json={
+        "username": "secure_flag_prod_user", "password": "password123",
+    })
+    prod_cookie_header = prod_response.headers.get("set-cookie", "").lower()
+    assert "secure" in prod_cookie_header
+    assert "samesite=none" in prod_cookie_header
+
+
+def test_foreign_keys_are_enforced(db: Session):
+    orphan_entry = PatientEntry(
+        patient_identifier="nonexistent-patient-xyz",
+        provider_identifier=999999,
+        info="orphan entry with a bogus FK on both columns",
+    )
+    db.add(orphan_entry)
+    with pytest.raises(IntegrityError):
+        db.commit()
+
+
+def test_role_enum_rejects_invalid_value_at_db_level(db: Session):
+    with pytest.raises((DataError, ProgrammingError)):
+        db.execute(text(
+            "INSERT INTO \"user\" (username, email, password, role) "
+            "VALUES ('bad_enum_user', 'bad_enum@example.com', 'x', 'not_a_real_role')"
+        ))
+        db.commit()
 
 
