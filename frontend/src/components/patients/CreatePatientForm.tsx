@@ -1,4 +1,5 @@
 import React, { useState, useId } from "react";
+import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../apiConfig";
 
 interface CreatePatientFormProps {
@@ -10,6 +11,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
     onSuccess,
     onCancel,
 }) => {
+    const { t } = useTranslation();
     const patientFirstNameId = useId();
     const patientLastNameId = useId();
     const patientDobId = useId();
@@ -48,11 +50,11 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
                 onSuccess();
             } else {
                 const err = await response.json();
-                setErrorMessage(err.detail || "Registration failed.");
+                setErrorMessage(err.detail || t('patients.form.registrationFailed'));
             }
         } catch (err) {
             console.error("Failed to submit patient:", err);
-            setErrorMessage("Network error. Please try again.");
+            setErrorMessage(t('patients.form.networkError'));
         } finally {
             setIsSubmitting(false);
         }
@@ -61,12 +63,12 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
     return (
         <div className="bg-white border rounded-xl p-6 shadow-sm max-w-xl">
             <div className="flex justify-between items-center border-b pb-3 mb-4">
-            <h2 className="text-xl font-bold text-slate-800">Add New Patient</h2>
+            <h2 className="text-xl font-bold text-slate-800">{t('patients.form.title')}</h2>
             <button
                 type="button"
                 onClick={onCancel}
                 className="text-slate-500 hover:text-slate-700 text-sm font-medium">
-                Cancel
+                {t('patients.form.cancel')}
             </button>
             </div>
 
@@ -74,7 +76,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientFirstNameId} className="text-xs font-semibold text-slate-700">
-                    First Name
+                    {t('patients.form.firstName')}
                 </label>
                 <input
                     id={patientFirstNameId}
@@ -87,7 +89,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
 
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientLastNameId} className="text-xs font-semibold text-slate-700">
-                    Last Name
+                    {t('patients.form.lastName')}
                 </label>
                 <input
                     id={patientLastNameId}
@@ -102,7 +104,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientDobId} className="text-xs font-semibold text-slate-700">
-                    Date of Birth
+                    {t('patients.form.dob')}
                 </label>
                 <input
                     id={patientDobId}
@@ -115,7 +117,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
 
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientSexId} className="text-xs font-semibold text-slate-700">
-                    Sex
+                    {t('patients.form.sex')}
                 </label>
                 <select
                     id={patientSexId}
@@ -123,17 +125,17 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
                     onChange={(e) => setSex(e.target.value)}
                     className="border rounded-lg px-3 py-2 text-sm outline-sky-500 bg-white"
                     required>
-                    <option value="">Select Option...</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="prefer_not_to_say">Prefer Not To Say</option>
+                    <option value="">{t('patients.form.selectOption')}</option>
+                    <option value="male">{t('patients.form.male')}</option>
+                    <option value="female">{t('patients.form.female')}</option>
+                    <option value="prefer_not_to_say">{t('patients.form.preferNotToSay')}</option>
                 </select>
                 </div>
             </div>
 
             <div className="flex flex-col gap-1">
                 <label htmlFor={patientIdentifierId} className="text-xs font-semibold text-slate-700">
-                    Unique Identifier (MRN / ID)
+                    {t('patients.form.identifier')}
                 </label>
                 <input
                     id={patientIdentifierId}
@@ -141,7 +143,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     className="border rounded-lg px-3 py-2 text-sm outline-sky-500"
-                    placeholder="e.g., P-10042"
+                    placeholder={t('patients.form.identifierPlaceholder')}
                     required />
             </div>
 
@@ -154,13 +156,13 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
                     type="button"
                     onClick={onCancel}
                     className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50">
-                    Cancel
+                    {t('patients.form.cancel')}
                 </button>
                 <button
                     type="submit"
                     disabled={isSubmitting}
                     className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold px-6 py-2 rounded-lg text-sm transition">
-                    {isSubmitting ? "Saving..." : "Add Patient"}
+                    {isSubmitting ? t('patients.form.saving') : t('patients.form.submit')}
                 </button>
             </div>
             </form>

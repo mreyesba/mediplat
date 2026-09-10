@@ -1,0 +1,10 @@
+/* 1.5x the default 40px row height for each half-hour slot in the week/day views. */
+.rbc-timeslot-group {
+    min-height: 60px;
+}
+
+/* This app has no all-day event feature, so hide the (always-rendered, empty)
+   all-day row that otherwise shows as a blank gap under the day headers. */
+.rbc-allday-cell {
+    display: none;
+}

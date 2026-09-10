@@ -1,16 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 function Account() {
+    const { t } = useTranslation();
     const location = useLocation();
 
     // Check currect URL path to toggle the switch button text dynamically
     const isSignUp = location.pathname.includes('signup');
 
-    return (   
+    return (
         <div className="account-container p-6 max-w-md mx-auto">
             {/* Title changes dynamically based on active sub-route */}
             <h2 className="text-2xl font-bold mb-4">
-                {isSignUp ? "Sign up" : "Log in"}
+                {isSignUp ? t('account.signup') : t('account.login')}
             </h2>
 
             {/* This placeholder injects either the Login or Signup version of FormsPage */}
@@ -24,8 +26,8 @@ function Account() {
                 className="text-blue-600 hover:underline block text-center"
             >
                 {isSignUp
-                    ? "If you already have an account, log in"
-                    : "Don't have an account, sign up!"
+                    ? t('account.haveAccount')
+                    : t('account.noAccount')
                 }
             </Link>
         </div>

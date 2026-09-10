@@ -1,6 +1,7 @@
 import './FormsPage.css';
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from './apiConfig';
 
@@ -9,6 +10,7 @@ interface FormsPageProps {
 }
 
 function FormsPage({ type }: FormsPageProps) {
+    const { t } = useTranslation();
     const { setUser } = useAuth();
     const navigate = useNavigate();
 
@@ -61,7 +63,7 @@ function FormsPage({ type }: FormsPageProps) {
                     setStep(2); // Advance to username choice
                 } else {
                     const err = await response.json();
-                    setErrorMessage(err.detail || 'Email validation failed.');
+                    setErrorMessage(err.detail || t('account.errors.emailValidationFailed'));
                 }
             } else if (step === 2) {
                 // Step 2: Validate Username availability
@@ -71,16 +73,16 @@ function FormsPage({ type }: FormsPageProps) {
                     credentials: 'include',
                     body: JSON.stringify({ username }),
                 });
-                
+
                 if (response.ok) {
                     setStep(3); // Advance to account creation
                 } else {
                     const err = await response.json();
-                    setErrorMessage(err.detail || 'Username is not available.');
+                    setErrorMessage(err.detail || t('account.errors.usernameUnavailable'));
                 }
             } else if (step === 3) {
                 if (password !== passwordConfirm) {
-                    setErrorMessage('Passwords do not match.');
+                    setErrorMessage(t('account.errors.passwordsDontMatch'));
                     setLoading(false);
                     return;
                 }
@@ -102,7 +104,7 @@ function FormsPage({ type }: FormsPageProps) {
                     navigate('/account/login');
                 } else {
                     const err = await response.json();
-                    setErrorMessage(err.detail || 'Registration failed.');
+                    setErrorMessage(err.detail || t('account.errors.registrationFailed'));
                 }
             }
         } catch (err) {
@@ -137,10 +139,10 @@ function FormsPage({ type }: FormsPageProps) {
                 });
                 
                 // 2. JUMP TO DASHBOARD OR HOME PAGE INSTANTLY WITHOUT PAGE RELOADS
-                navigate('/home'); 
+                navigate('/');
             } else {
                 const err = await response.json();
-                setErrorMessage(err.detail || 'Login failed.');
+                setErrorMessage(err.detail || t('account.errors.loginFailed'));
             }
         } catch (err) {
             console.error('Failed to submit payload:', err);
@@ -154,41 +156,41 @@ function FormsPage({ type }: FormsPageProps) {
             <form 
                 className="flex flex-col gap-4 border p-4 rounded bg-white shadow-sm" 
                 onSubmit={handleLoginSubmit}>
-                <h2 className="text-xl font-bold">Welcome Back</h2>
+                <h2 className="text-xl font-bold">{t('account.welcomeBack')}</h2>
                 <div className="flex flex-col gap-1">
-                    <label 
+                    <label
                         htmlFor={loginUsernameId}
                         className="text-sm font-semibold text-slate-700">
-                        Username
+                        {t('account.username')}
                     </label>
-                    <input 
+                    <input
                         id={loginUsernameId}
-                        type="text" 
-                        value={username} 
-                        onChange={(e) => setUsername(e.target.value)} 
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         className="border rounded px-3 py-2" required />
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label 
+                    <label
                         htmlFor={loginPasswordId}
                         className="text-sm font-semibold text-slate-700">
-                        Password
+                        {t('account.password')}
                     </label>
-                    <input 
+                    <input
                         id={loginPasswordId}
-                        type="password" 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        className="border rounded px-3 py-2" 
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border rounded px-3 py-2"
                         required />
                 </div>
                 {errorMessage && (
                     <p className="text-sm text-red-600 font-medium">{errorMessage}</p>
                 )}
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     className="bg-sky-600 text-white font-bold py-2 rounded">
-                    Log in
+                    {t('account.logIn')}
                 </button>
             </form>
         );
@@ -201,19 +203,19 @@ function FormsPage({ type }: FormsPageProps) {
             onSubmit={handleNextStep}>
             <div className="flex justify-between items-center border-b pb-2 mb-2">
                 <h2 className="text-xl font-bold">
-                    Create Account
+                    {t('account.createAccount')}
                 </h2>
                 <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">
-                    Step {step} of 3
+                    {t('account.stepOf', { step })}
                 </span>
             </div>
 
             {step >= 1 && (
             <div className="flex flex-col gap-1">
-                <label 
+                <label
                     htmlFor={signupEmailId}
                     className="text-sm font-semibold text-slate-700">
-                    Enter Email Address
+                    {t('account.enterEmail')}
                 </label>
                 <input 
                     id={signupEmailId}
@@ -229,9 +231,9 @@ function FormsPage({ type }: FormsPageProps) {
             {step >= 2 && (
             <div className="flex flex-col gap-1">
                 <label
-                    htmlFor={signupUsernameId} 
+                    htmlFor={signupUsernameId}
                     className="text-sm font-semibold text-slate-700">
-                    Choose an Available Username
+                    {t('account.chooseUsername')}
                 </label>
                 <input 
                     id={signupUsernameId}
@@ -248,9 +250,9 @@ function FormsPage({ type }: FormsPageProps) {
             <div>
                 <div className="flex flex-col gap-1">
                     <label
-                        htmlFor={signupPasswordId} 
+                        htmlFor={signupPasswordId}
                         className="text-sm font-semibold text-slate-700">
-                        Secure Your Password
+                        {t('account.securePassword')}
                     </label>
                     <input 
                         id={signupPasswordId}
@@ -264,7 +266,7 @@ function FormsPage({ type }: FormsPageProps) {
                 <div className="flex flex-col gap-1">
                     <label
                         className="text-sm font-semibold text-slate-700">
-                        Confirm Password
+                        {t('account.confirmPassword')}
                     </label>
                     <input
                         type="password" 
@@ -276,9 +278,9 @@ function FormsPage({ type }: FormsPageProps) {
 
                 <div className="flex flex-col gap-1">
                     <label
-                        htmlFor={signupFirstNameId} 
+                        htmlFor={signupFirstNameId}
                         className="text-sm font-semibold text-slate-700">
-                        First Name
+                        {t('account.firstName')}
                     </label>
                     <input 
                         id={signupFirstNameId}
@@ -291,9 +293,9 @@ function FormsPage({ type }: FormsPageProps) {
 
                 <div className="flex flex-col gap-1">
                     <label
-                        htmlFor={signupLastNameId} 
+                        htmlFor={signupLastNameId}
                         className="text-sm font-semibold text-slate-700">
-                        Last Name
+                        {t('account.lastName')}
                     </label>
                     <input 
                         id={signupLastNameId}
@@ -306,9 +308,9 @@ function FormsPage({ type }: FormsPageProps) {
 
                 <div className="flex flex-col gap-1">
                     <label
-                        htmlFor={signupDobId} 
+                        htmlFor={signupDobId}
                         className="text-sm font-semibold text-slate-700">
-                        Date of birth
+                        {t('account.dob')}
                     </label>
                     <input 
                         id={signupDobId}
@@ -322,20 +324,20 @@ function FormsPage({ type }: FormsPageProps) {
                 <div>
                     <div className="flex flex-col gap-1">
                         <label
-                            htmlFor={signupRoleId} 
+                            htmlFor={signupRoleId}
                             className="text-sm font-semibold text-slate-700">
-                            Role
+                            {t('account.role')}
                         </label>
-                        <select 
+                        <select
                             id={signupRoleId}
-                            value={role} 
-                            onChange={(e) => setRole(e.target.value)} 
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
                             className="border rounded px-3 py-2 outline-sky-500 bg-white"
                             required>
-                            <option value="">Select Option...</option>
-                            <option value="provider">Provider</option>
-                            <option value="front_desk">Front desk</option>
-                            <option value="clinic_admin">Clinic admin</option>
+                            <option value="">{t('account.selectOption')}</option>
+                            <option value="provider">{t('account.roleProvider')}</option>
+                            <option value="front_desk">{t('account.roleFrontDesk')}</option>
+                            <option value="clinic_admin">{t('account.roleClinicAdmin')}</option>
                         </select>
                     </div>
                 </div>
@@ -347,18 +349,18 @@ function FormsPage({ type }: FormsPageProps) {
                 <p className="text-sm text-red-600 font-medium">{errorMessage}</p>
             )}
             {step > 1 && (
-                <button 
-                    type="button" 
-                    onClick={() => setStep(step - 1)} 
+                <button
+                    type="button"
+                    onClick={() => setStep(step - 1)}
                     className="border px-4 py-2 rounded text-sm hover:bg-slate-50">
-                    Back
+                    {t('account.back')}
                 </button>
             )}
-            <button 
-                type="submit" 
-                disabled={loading} 
+            <button
+                type="submit"
+                disabled={loading}
                 className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-6 py-2 rounded text-sm disabled:opacity-50">
-                {loading ? 'Verifying...' : step === 3 ? 'Complete Sign Up' : 'Continue'}
+                {loading ? t('account.verifying') : step === 3 ? t('account.completeSignUp') : t('account.continue')}
             </button>
             </div>
         </form>
