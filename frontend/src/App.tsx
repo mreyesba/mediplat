@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import './i18n/i18n.ts';
 import Navbar from './Navbar.tsx';
 import Home from './Home.tsx';
 import Account from './Account.tsx';
