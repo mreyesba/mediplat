@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Patient } from "./types";
 import { CreatePatientForm } from "./CreatePatientForm";
 import { PatientDetailView } from "./PatientDetailView";
 import { API_BASE_URL } from "../../apiConfig";
 
 function Patients() {
+    const { t } = useTranslation();
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedIdentifier, setSelectedIdentifier] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -32,7 +34,7 @@ function Patients() {
         } catch (error) {
             console.error("Patients retrieval failed:", error);
             setPatients([]);
-            setErrorMessage("Failed to fetch patients.");
+            setErrorMessage(t('patients.fetchFailed'));
         } finally {
             setIsLoading(false);
         }
@@ -63,12 +65,12 @@ function Patients() {
             <main className="flex-1 flex flex-col h-full overflow-hidden border-r">
             {/* Top Bar */}
             <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm">
-                <h1 className="text-xl font-bold text-slate-800">Patients</h1>
+                <h1 className="text-xl font-bold text-slate-800">{t('patients.title')}</h1>
                 <button
                 onClick={() => setIsCreating(true)}
                 className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
                 >
-                + Add New Patient
+                {t('patients.addNew')}
                 </button>
             </div>
 
@@ -89,7 +91,7 @@ function Patients() {
                 />
                 ) : (
                 <div className="text-center text-slate-400 py-12">
-                    {isLoading ? "Loading patients..." : "No patient selected."}
+                    {isLoading ? t('patients.loading') : t('patients.noneSelected')}
                 </div>
                 )}
             </div>
@@ -100,7 +102,7 @@ function Patients() {
             <div className="p-4 border-b space-y-3">
                 <input
                 type="text"
-                placeholder="Search patient or ID..."
+                placeholder={t('patients.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg text-sm outline-sky-500"
@@ -127,10 +129,10 @@ function Patients() {
                         {patient.first_name} {patient.last_name}
                         </span>
                         <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                        {patient.entries.length} entries
+                        {t('patients.entries', { count: patient.entries.length })}
                         </span>
                     </div>
-                    <span className="text-xs text-slate-400">ID: {patient.identifier}</span>
+                    <span className="text-xs text-slate-400">{t('patients.idLabel')}: {patient.identifier}</span>
                     </button>
                 );
                 })}
