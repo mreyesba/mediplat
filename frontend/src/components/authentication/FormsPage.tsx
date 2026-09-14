@@ -3,7 +3,7 @@ import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL } from '../../apiConfig';
 
 interface FormsPageProps {
   type: 'login' | 'signup';

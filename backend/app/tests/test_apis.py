@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError, DataError, ProgrammingError
 from fastapi.testclient import TestClient
 from database import Base, SessionLocal
 from models import UserInfo, User, UserRole, Patient, PatientEntry
-import main as main_module
+import config
 from main import app, get_db
 
 # Isolated testing engine, pointed at the postgres-test container
@@ -392,7 +392,7 @@ def test_login_cookie_secure_flag_matches_environment(client: TestClient, monkey
     assert "samesite=lax" in dev_cookie_header
 
     # Simulated production mode: Secure must be present, SameSite=None.
-    monkeypatch.setattr(main_module, "IS_PRODUCTION", True)
+    monkeypatch.setattr(config, "IS_PRODUCTION", True)
 
     client.post("/api/register", json={
         "username": "secure_flag_prod_user",

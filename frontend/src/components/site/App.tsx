@@ -1,13 +1,13 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import './i18n/i18n.ts';
+import '../../i18n/i18n.ts';
 import Navbar from './Navbar.tsx';
-import Home from './Home.tsx';
-import Account from './Account.tsx';
-import Dashboards from './Dashboards.tsx';
-import FormsPage from './FormsPage.tsx';
-import { useAuth } from './AuthContext.tsx';
-import Patients from './components/patients/Patients.tsx';
-import Appointments from './components/appointments/Appointment.tsx';
+import Home from '../../Home.tsx';
+import Account from '../../Account.tsx';
+import Dashboards from '../dashboards/Dashboards.tsx';
+import FormsPage from '../authentication/FormsPage.tsx';
+import { useAuth } from '../authentication/AuthContext.tsx';
+import Patients from '../patients/Patients.tsx';
+import Appointments from '../appointments/Appointment.tsx';
 
 // Simple Page Components
 const NotFound = () => <h2>⚠️ 404 - Page Not Found</h2>;

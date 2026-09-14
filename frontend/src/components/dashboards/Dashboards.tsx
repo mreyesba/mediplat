@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import TrendLineChart from './components/TrendLineChart'
-import { useChartData } from './data/useChartData'
+import TrendLineChart from './TrendLineChart'
+import { useChartData } from '../../data/useChartData'
 
 function Dashboards() {
     const { t } = useTranslation();
