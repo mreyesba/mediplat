@@ -1,19 +1,74 @@
 import { useEffect, useState } from "react";
-import { Calendar, dateFnsLocalizer, Views, type View } from "react-big-calendar";
+import { useTranslation } from "react-i18next";
+import { Calendar, dateFnsLocalizer, Views, type View, type Formats } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
+import { es } from "date-fns/locale/es";
 import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
 import { API_BASE_URL } from "../../apiConfig";
+import "./CalendarView.css";
 
-const locales = { "en-US": enUS };
+const locales = { "en-US": enUS, es };
+
+// Only the hours/minutes are read by react-big-calendar's scroll-to logic;
+// the date portion is irrelevant.
+const DEFAULT_SCROLL_TIME = new Date(1970, 0, 1, 8, 0, 0);
+
+// Mexico (and the US) start the week on Sunday, regardless of the locale's
+// own default (the "es" date-fns locale otherwise defaults to Monday).
+const startOfWeekSunday: typeof startOfWeek = (date, options) =>
+  startOfWeek(date, { ...options, weekStartsOn: 0 });
 
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek,
+  startOfWeek: startOfWeekSunday,
   getDay,
   locales,
 });
+
+const capitalizeFirst = (value: string) =>
+  value.length ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+
+// react-big-calendar's date-fns locales (including "es") lowercase month/day
+// names by default, following Spanish typographic convention. We capitalize
+// them to match the English styling used elsewhere in this app.
+//
+// Times: the locale-shorthand 'p' token renders 24-hour with no AM/PM marker
+// in the "es" locale (but 12-hour with AM/PM in "en-US"). We force an
+// explicit 12-hour + meridiem pattern so both languages behave the same way.
+type RBCLocalizerLike = { format: (date: Date, format: string, culture?: string) => string };
+
+const formatTime = (date: Date, culture: string | undefined, localizer: RBCLocalizerLike) =>
+  localizer.format(date, "h:mm a", culture);
+
+const calendarFormats: Formats = {
+  dayFormat: (date, culture, localizer) => {
+    const dayNumber = localizer!.format(date, "dd", culture);
+    const weekday = capitalizeFirst(localizer!.format(date, "eee", culture));
+    return `${dayNumber} ${weekday}`;
+  },
+  weekdayFormat: (date, culture, localizer) => capitalizeFirst(localizer!.format(date, "ccc", culture)),
+  monthHeaderFormat: (date, culture, localizer) => capitalizeFirst(localizer!.format(date, "MMMM yyyy", culture)),
+  dayHeaderFormat: (date, culture, localizer) => capitalizeFirst(localizer!.format(date, "cccc MMM dd", culture)),
+  agendaDateFormat: (date, culture, localizer) => capitalizeFirst(localizer!.format(date, "ccc MMM dd", culture)),
+  dayRangeHeaderFormat: ({ start, end }, culture, localizer) => {
+    const sameMonth = start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth();
+    const startLabel = capitalizeFirst(localizer!.format(start, "MMMM dd", culture));
+    const endLabel = sameMonth
+      ? localizer!.format(end, "dd", culture)
+      : capitalizeFirst(localizer!.format(end, "MMMM dd", culture));
+    return `${startLabel} – ${endLabel}`;
+  },
+  timeGutterFormat: (date, culture, localizer) => formatTime(date, culture, localizer!),
+  eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+    `${formatTime(start, culture, localizer!)} – ${formatTime(end, culture, localizer!)}`,
+  selectRangeFormat: ({ start, end }, culture, localizer) =>
+    `${formatTime(start, culture, localizer!)} – ${formatTime(end, culture, localizer!)}`,
+  agendaTimeFormat: (date, culture, localizer) => formatTime(date, culture, localizer!),
+  agendaTimeRangeFormat: ({ start, end }, culture, localizer) =>
+    `${formatTime(start, culture, localizer!)} – ${formatTime(end, culture, localizer!)}`,
+};
 
 // Generate 30-minute time slot options for user-friendly dropdowns
 const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
@@ -63,6 +118,26 @@ interface CalendarEvent {
 }
 
 export function CalendarView() {
+    const { t, i18n } = useTranslation();
+    const culture = i18n.language.startsWith("es") ? "es" : "en-US";
+    const calendarMessages = {
+        today: t("appointments.calendar.today"),
+        previous: t("appointments.calendar.back"),
+        next: t("appointments.calendar.next"),
+        month: t("appointments.calendar.month"),
+        week: t("appointments.calendar.week"),
+        day: t("appointments.calendar.day"),
+        agenda: t("appointments.calendar.agenda"),
+        date: t("appointments.calendar.date"),
+        time: t("appointments.calendar.time"),
+        event: t("appointments.calendar.event"),
+        allDay: t("appointments.calendar.allDay"),
+        work_week: t("appointments.calendar.workWeek"),
+        yesterday: t("appointments.calendar.yesterday"),
+        tomorrow: t("appointments.calendar.tomorrow"),
+        noEventsInRange: t("appointments.calendar.noEventsInRange"),
+        showMore: (total: number) => t("appointments.calendar.showMore", { count: total }),
+    };
     const [events, setEvents] = useState<CalendarEvent[]>([]);
 
     const [view, setView] = useState<View>(Views.WEEK);
@@ -102,7 +177,7 @@ export function CalendarView() {
         } catch (error) {
             console.error("Event retrieval failed:", error);
             setEvents([]);
-            setErrorMessage("Failed to fetch events.");
+            setErrorMessage(t('appointments.fetchFailed'));
         }
     };
 
@@ -155,7 +230,7 @@ export function CalendarView() {
         const endObj = combineDateAndTime(eventDate, endTime);
 
         if (endObj <= startObj) {
-            setErrorMessage("End time must be after the start time.");
+            setErrorMessage(t('appointments.endBeforeStart'));
             return;
         }
 
@@ -189,7 +264,7 @@ export function CalendarView() {
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || "Failed to update event.");
+                    throw new Error(err.detail || t('appointments.updateFailed'));
                 }
 
                 setIsSubmitting(false);
@@ -197,7 +272,7 @@ export function CalendarView() {
             } catch (err: any) {
                 // Rollback state on error
                 setEvents(previousEvents);
-                setErrorMessage(err.message || "Network error occurred.");
+                setErrorMessage(err.message || t('appointments.networkError'));
                 setIsSubmitting(false);
             }
         } else {
@@ -228,7 +303,7 @@ export function CalendarView() {
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || "Failed to create event.");
+                    throw new Error(err.detail || t('appointments.createFailed'));
                 }
 
                 const data = await response.json();
@@ -243,7 +318,7 @@ export function CalendarView() {
             } catch (err: any) {
                 // Rollback state on error
                 setEvents(previousEvents);
-                setErrorMessage(err.message || "Network error occurred.");
+                setErrorMessage(err.message || t('appointments.networkError'));
                 setIsSubmitting(false);
             }
         }
@@ -267,7 +342,7 @@ export function CalendarView() {
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.detail || "Failed to delete event.");
+                throw new Error(err.detail || t('appointments.deleteFailed'));
             }
 
             setIsDeleting(false);
@@ -275,7 +350,7 @@ export function CalendarView() {
         } catch (err: any) {
             // Rollback state on error
             setEvents(previousEvents);
-            setErrorMessage(err.message || "Network error occurred.");
+            setErrorMessage(err.message || t('appointments.networkError'));
             setIsDeleting(false);
         }
     };
@@ -285,7 +360,7 @@ export function CalendarView() {
         <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
         <div className="flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-neutral-700" />
-            <h1 className="text-2xl font-bold text-neutral-800">Schedule Workspace</h1>
+            <h1 className="text-2xl font-bold text-neutral-800">{t('appointments.title')}</h1>
         </div>
         <button
             onClick={() => {
@@ -299,13 +374,17 @@ export function CalendarView() {
             }}
             className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
         >
-            <Plus className="h-4 w-4" /> Create Event
+            <Plus className="h-4 w-4" /> {t('appointments.createEvent')}
         </button>
         </div>
 
         <div className="flex-1 min-h-[70vh]">
         <Calendar
             localizer={localizer}
+            culture={culture}
+            messages={calendarMessages}
+            formats={calendarFormats}
+            scrollToTime={DEFAULT_SCROLL_TIME}
             events={events}
             startAccessor="start"
             endAccessor="end"
@@ -328,7 +407,7 @@ export function CalendarView() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl relative">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
-                {editingEventId ? "Edit Event" : "Plan New Event"}
+                {editingEventId ? t('appointments.editEvent') : t('appointments.planEvent')}
             </h3>
 
             {errorMessage && (
@@ -341,13 +420,13 @@ export function CalendarView() {
             <form onSubmit={handleSaveEventSubmit} className="flex flex-col gap-4">
                 <div>
                 <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                    Event Title
+                    {t('appointments.eventTitle')}
                 </label>
                 <input
                     type="text"
                     required
                     disabled={isBusy}
-                    placeholder="e.g. Design Sync / Code Deploy"
+                    placeholder={t('appointments.eventTitlePlaceholder')}
                     value={newEventTitle}
                     onChange={(e) => setNewEventTitle(e.target.value)}
                     className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-neutral-900 disabled:bg-neutral-100"
@@ -357,7 +436,7 @@ export function CalendarView() {
                 {/* Clean Date Picker */}
                 <div>
                 <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                    Date
+                    {t('appointments.date')}
                 </label>
                 <input
                     type="date"
@@ -373,7 +452,7 @@ export function CalendarView() {
                 <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                        Start Time
+                        {t('appointments.startTime')}
                     </label>
                     <select
                     value={startTime}
@@ -391,7 +470,7 @@ export function CalendarView() {
 
                 <div>
                     <label className="text-xs font-semibold text-neutral-500 block mb-1">
-                        End Time
+                        {t('appointments.endTime')}
                     </label>
                     <select
                     value={endTime}
@@ -411,7 +490,7 @@ export function CalendarView() {
                 {/* Quick Duration Pills */}
                 <div>
                 <label className="text-xs font-semibold text-neutral-400 block mb-1.5 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Quick Duration
+                    <Clock className="h-3 w-3" /> {t('appointments.quickDuration')}
                 </label>
                 <div className="flex gap-2">
                     {DURATION_PRESETS.map((preset) => (
@@ -439,12 +518,12 @@ export function CalendarView() {
                         {isDeleting ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Deleting...
+                            {t('appointments.deleting')}
                         </>
                         ) : (
                         <>
                             <Trash2 className="h-4 w-4" />
-                            Delete
+                            {t('appointments.delete')}
                         </>
                         )}
                     </button>
@@ -456,7 +535,7 @@ export function CalendarView() {
                     onClick={closeModal}
                     className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg disabled:opacity-50"
                 >
-                    Cancel
+                    {t('appointments.cancel')}
                 </button>
                 <button
                     type="submit"
@@ -466,10 +545,10 @@ export function CalendarView() {
                     {isSubmitting ? (
                     <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Saving...
+                        {t('appointments.saving')}
                     </>
                     ) : (
-                    "Save Event"
+                    t('appointments.save')
                     )}
                 </button>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { API_BASE_URL } from "../../apiConfig";
 
 interface CreateEntryFormProps {
@@ -12,6 +13,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
     onEntryAdded,
     onCancel,
 }) => {
+    const { t } = useTranslation();
     const [info, setInfo] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -39,11 +41,11 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                 onEntryAdded();
             } else {
             const err = await response.json();
-                setError(err.detail || "Failed to add entry.");
+                setError(err.detail || t('patients.entryForm.addFailed'));
             }
         } catch (err) {
             console.error("Failed to post entry:", err);
-            setError("Network error.");
+            setError(t('patients.entryForm.networkError'));
         } finally {
             setIsSubmitting(false);
         }
@@ -52,13 +54,13 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
             <div className="flex justify-between items-center border-b px-6 py-4 shrink-0">
-                <h2 className="text-lg font-bold text-slate-800">New Clinical Entry</h2>
+                <h2 className="text-lg font-bold text-slate-800">{t('patients.entryForm.title')}</h2>
                 <button
                     type="button"
                     disabled={isSubmitting}
                     onClick={onCancel}
                     className="text-slate-400 hover:text-slate-600 text-2xl leading-none disabled:opacity-50"
-                    aria-label="Close"
+                    aria-label={t('patients.entryForm.close')}
                 >
                     &times;
                 </button>
@@ -69,7 +71,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                     autoFocus
                     value={info}
                     onChange={(e) => setInfo(e.target.value)}
-                    placeholder="Record clinical notes, observations, or updates..."
+                    placeholder={t('patients.entryForm.placeholder')}
                     className="w-full h-full p-4 border rounded-lg text-sm leading-relaxed focus:ring-2 focus:ring-sky-500 outline-none resize-none"
                     required
                 />
@@ -84,14 +86,14 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                         onClick={onCancel}
                         className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                     >
-                        Cancel
+                        {t('patients.entryForm.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={isSubmitting || !info.trim()}
                         className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold px-6 py-2 rounded-lg text-sm transition"
                     >
-                        {isSubmitting ? "Saving..." : "Save Entry"}
+                        {isSubmitting ? t('patients.entryForm.saving') : t('patients.entryForm.submit')}
                     </button>
                 </div>
             </div>
