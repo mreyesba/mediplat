@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import type { ChartPoint } from '../data/useChartData'
+import type { ChartPoint } from '../../data/useChartData'
 import './TrendLineChart.css'
 
 interface TrendLineChartProps {

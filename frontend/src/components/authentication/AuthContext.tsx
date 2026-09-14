@@ -5,7 +5,7 @@ import { createContext,
          type ReactNode, 
          type Dispatch, 
          type SetStateAction } from 'react';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL } from '../../apiConfig';
 
 // 1. Declare the strict shape of our logged-in user profile metadata
 export interface User {

@@ -7,8 +7,8 @@ import { http, HttpResponse } from 'msw'
 import React from 'react'
 import { page } from 'vitest/browser' 
 
-import App from '../src/App.tsx'
-import AuthProvider from '../src/AuthContext.tsx'
+import App from '@/components/site/App.tsx'
+import AuthProvider from '@/components/authentication/AuthContext.tsx'
 
 // Helper function that mirrors your index.tsx provider hierarchy
 // Specify the exact route where FormsPage renders (e.g., '/account')

@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 
@@ -26,6 +27,12 @@ DEBUG = os.getenv("DEBUG", "False").strip().lower() in ("1", "true", "yes")
 # cookie security flags (see main.py), independent of the DEBUG SQL logging
 # toggle above.
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+IS_PRODUCTION = ENVIRONMENT == "production"
+
+# Initialize the Python standard logging configuration framework.
+# 'INFO' level ensures that debug-adjacent operational notes print to the shell.
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("backend_logger")
 
 # Comma-separated list of origins allowed to call this API with credentials.
 CORS_ORIGINS = [
