@@ -92,7 +92,8 @@
       "saving": "Guardando...",
       "submit": "Guardar entrada",
       "addFailed": "No se pudo agregar la entrada.",
-      "networkError": "Error de red."
+      "networkError": "Error de red.",
+      "addTemplate": "Agregar plantilla predefinida"
     }
   },
   "appointments": {
