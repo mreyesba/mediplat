@@ -92,7 +92,8 @@
       "saving": "Saving...",
       "submit": "Save Entry",
       "addFailed": "Failed to add entry.",
-      "networkError": "Network error."
+      "networkError": "Network error.",
+      "addTemplate": "Add predefined template"
     }
   },
   "appointments": {

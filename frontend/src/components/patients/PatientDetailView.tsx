@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Patient } from "./types";
+import type { Entry, Patient } from "./types";
 import { CreateEntryForm } from "./CreateEntryForm";
 
 interface PatientDetailViewProps {
@@ -14,13 +14,19 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 }) => {
     const { t } = useTranslation();
     const [isAddingEntry, setIsAddingEntry] = useState(false);
+    const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+
+    const closeModal = () => {
+        setIsAddingEntry(false);
+        setSelectedEntry(null);
+    };
 
     return (
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             {/* Patient Header */}
             <div className="bg-white p-5 rounded-xl border shadow-sm flex justify-between items-start">
             <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="flex text-2xl font-bold text-slate-900">
                 {patient.first_name} {patient.last_name}
                 </h2>
                 <div className="flex gap-4 text-xs text-slate-500 mt-1">
@@ -37,20 +43,22 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </button>
             </div>
 
-            {isAddingEntry && (
+            {(isAddingEntry || selectedEntry) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl w-[90vw] h-[85vh] max-w-5xl flex flex-col overflow-hidden">
                         <CreateEntryForm
+                            key={selectedEntry?.id ?? "new"}
                             patientIdentifier={patient.identifier}
+                            entry={selectedEntry ?? undefined}
                             onEntryAdded={() => {
-                                setIsAddingEntry(false);
+                                closeModal();
                                 onRefreshData();
                             }}
-                            onCancel={() => setIsAddingEntry(false)}
+                            onCancel={closeModal}
                         />
                     </div>
                 </div>
-            )}
+            )} 
 
             {/* Entry History */}
             <div className="space-y-3">
@@ -64,8 +72,13 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 </div>
             ) : (
                 patient.entries.map((entry) => (
-                <div key={entry.id} className="bg-white p-4 rounded-xl border shadow-sm space-y-2">
-                    <div className="flex justify-between items-center text-xs text-slate-400 border-b pb-2">
+                <button
+                    key={entry.id}
+                    type="button"
+                    onClick={() => setSelectedEntry(entry)}
+                    className="w-full text-left bg-white p-4 rounded-xl border shadow-sm hover:border-sky-300 hover:bg-sky-50/40 transition"
+                >
+                    <div className="flex justify-between items-center text-xs text-slate-400">
                     <span>{t('patients.detail.entryNumber', { id: entry.id })}</span>
                     <span>
                         {new Date(entry.created_at).toLocaleString([], {
@@ -74,10 +87,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                         })}
                     </span>
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                    {entry.info}
-                    </p>
-                </div>
+                </button>
                 ))
             )}
             </div>

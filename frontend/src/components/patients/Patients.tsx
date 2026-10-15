@@ -64,7 +64,7 @@ function Patients() {
             {/* MAIN PANEL */}
             <main className="flex-1 flex flex-col h-full overflow-hidden border-r">
             {/* Top Bar */}
-            <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm">
+            <div className="bg-white border-b px-6 flex justify-between items-center shadow-sm">
                 <h1 className="text-xl font-bold text-slate-800">{t('patients.title')}</h1>
                 <button
                 onClick={() => setIsCreating(true)}
