@@ -43,6 +43,11 @@ const mockHandlers = [
         }
         return HttpResponse.json({ detail: 'Invalid credentials.' }, { status: 400 })
     }),
+
+    // Home lists upcoming appointments right after login
+    http.get('/api/get_events', async () => {
+        return HttpResponse.json([])
+    }),
 ]
 
 const worker = setupWorker(...mockHandlers)

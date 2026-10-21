@@ -9,7 +9,12 @@
   },
   "home": {
     "title": "¡Bienvenido a nuestra clínica!",
-    "subtitle": "¡Cuidamos tu salud!"
+    "subtitle": "¡Cuidamos tu salud!",
+    "upcoming": "Próximas citas",
+    "viewCalendar": "Ver calendario",
+    "loading": "Cargando...",
+    "noUpcoming": "No hay citas próximas.",
+    "loadFailed": "No se pudieron cargar las citas."
   },
   "account": {
     "login": "Iniciar sesión",
@@ -44,7 +49,9 @@
       "passwordsDontMatch": "Las contraseñas no coinciden.",
       "registrationFailed": "El registro falló.",
       "loginFailed": "Error al iniciar sesión."
-    }
+    },
+    "staffCode": "Código de registro del personal",
+    "staffCodeHint": "Pídele este código al administrador de tu clínica."
   },
   "patients": {
     "title": "Pacientes",
@@ -82,7 +89,10 @@
       "history_one": "Historial ({{count}} entrada)",
       "history_other": "Historial ({{count}} entradas)",
       "noEntries": "Aún no hay entradas clínicas registradas para este paciente.",
-      "entryNumber": "Entrada #{{id}}"
+      "entryNumber": "Entrada #{{id}}",
+      "age": "Edad",
+      "searchEntries": "Buscar en las entradas...",
+      "noMatches": "Ninguna entrada coincide con \"{{term}}\"."
     },
     "entryForm": {
       "title": "Nueva entrada clínica",
@@ -93,8 +103,13 @@
       "submit": "Guardar entrada",
       "addFailed": "No se pudo agregar la entrada.",
       "networkError": "Error de red.",
-      "addTemplate": "Agregar plantilla predefinida"
-    }
+      "addTemplate": "Agregar plantilla predefinida",
+      "copyPrevious": "Copiar entrada anterior",
+      "discardConfirm": "¿Descartar esta entrada? Se perderá lo que has escrito.",
+      "older": "Anterior",
+      "newer": "Siguiente"
+    },
+    "lastEntry": "Última entrada {{when}}"
   },
   "appointments": {
     "title": "Espacio de citas",

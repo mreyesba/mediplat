@@ -1,12 +1,22 @@
 import { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { formatDistanceToNow } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
+import { es } from "date-fns/locale/es";
 import type { Patient } from "./types";
 import { CreatePatientForm } from "./CreatePatientForm";
 import { PatientDetailView } from "./PatientDetailView";
 import { API_BASE_URL } from "../../apiConfig";
 
+const lastEntryDate = (patient: Patient) =>
+    patient.entries.reduce<Date | null>((latest, entry) => {
+        const created = new Date(entry.created_at);
+        return !latest || created > latest ? created : latest;
+    }, null);
+
 function Patients() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.resolvedLanguage === "es" ? es : enUS;
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedIdentifier, setSelectedIdentifier] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -86,6 +96,7 @@ function Patients() {
                 />
                 ) : selectedPatient ? (
                 <PatientDetailView
+                    key={selectedPatient.identifier}
                     patient={selectedPatient}
                     onRefreshData={fetchPatients}
                 />
@@ -113,6 +124,7 @@ function Patients() {
             <div className="flex-1 overflow-y-auto divide-y">
                 {filteredPatients.map((patient) => {
                 const isSelected = patient.identifier === selectedIdentifier;
+                const lastEntry = lastEntryDate(patient);
                 return (
                     <button
                     key={patient.identifier}
@@ -133,6 +145,13 @@ function Patients() {
                         </span>
                     </div>
                     <span className="text-xs text-slate-400">{t('patients.idLabel')}: {patient.identifier}</span>
+                    {lastEntry && (
+                        <span className="text-xs text-slate-400" title={lastEntry.toLocaleString()}>
+                        {t('patients.lastEntry', {
+                            when: formatDistanceToNow(lastEntry, { addSuffix: true, locale: dateLocale }),
+                        })}
+                        </span>
+                    )}
                     </button>
                 );
                 })}

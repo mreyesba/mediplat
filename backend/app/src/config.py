@@ -29,6 +29,10 @@ DEBUG = os.getenv("DEBUG", "False").strip().lower() in ("1", "true", "yes")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
 IS_PRODUCTION = ENVIRONMENT == "production"
 
+# Shared secret that must accompany any staff (non-patient) role at sign-up.
+# Unset means staff sign-up is disabled — the safe default for a fresh deploy.
+STAFF_SIGNUP_CODE = os.getenv("STAFF_SIGNUP_CODE", "").strip() or None
+
 # Initialize the Python standard logging configuration framework.
 # 'INFO' level ensures that debug-adjacent operational notes print to the shell.
 logging.basicConfig(level=logging.INFO)
