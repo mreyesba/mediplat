@@ -23,6 +23,13 @@ if not TEST_DATABASE_URL:
     )
 test_engine = create_engine(TEST_DATABASE_URL)
 
+STAFF_CODE = "test-staff-code"
+
+# Staff sign-up is disabled unless a code is configured — give every test one
+@pytest.fixture(autouse=True)
+def staff_signup_code(monkeypatch):
+    monkeypatch.setattr(config, "STAFF_SIGNUP_CODE", STAFF_CODE)
+
 # 1. Provide a TestClient that uses our isolated database session
 @pytest.fixture
 def client(db):
@@ -160,13 +167,67 @@ def test_api_registration_success(client: TestClient):
         "first_name": "Jane",
         "last_name": "Smith",
         "dob": "1995-05-15",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     
     response = client.post("/api/register", json=registration_payload)
     
     assert response.status_code == 200
     assert response.json() == {"status": "success", "message": "Account created successfully!"}
+
+
+def _registration(username: str, role: UserRole, **extra) -> dict:
+    return {
+        "username": username,
+        "email": f"{username}@example.com",
+        "password": "password123",
+        "first_name": "Role",
+        "last_name": "Check",
+        "dob": "1990-01-01",
+        "role": role.value,
+        **extra,
+    }
+
+
+def test_api_registration_patient_needs_no_staff_code(client: TestClient, db: Session):
+    response = client.post("/api/register", json=_registration("plain_patient", UserRole.PATIENT))
+    assert response.status_code == 200
+
+    stored_user = db.query(User).filter(User.username == "plain_patient").first()
+    assert stored_user.role == UserRole.PATIENT
+
+
+@pytest.mark.parametrize("role", [UserRole.PROVIDER, UserRole.FRONT_DESK, UserRole.CLINIC_ADMIN])
+@pytest.mark.parametrize("staff_code", [None, "", "wrong-code"])
+def test_api_registration_staff_role_rejects_missing_or_wrong_code(
+    client: TestClient, db: Session, role, staff_code
+):
+    extra = {} if staff_code is None else {"staff_code": staff_code}
+    response = client.post("/api/register", json=_registration("would_be_staff", role, **extra))
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Invalid staff sign-up code."
+    assert db.query(User).filter(User.username == "would_be_staff").first() is None
+
+
+def test_api_registration_staff_role_accepts_correct_code(client: TestClient, db: Session):
+    response = client.post(
+        "/api/register",
+        json=_registration("real_staff", UserRole.FRONT_DESK, staff_code=f"  {STAFF_CODE} "),
+    )
+    assert response.status_code == 200
+
+    stored_user = db.query(User).filter(User.username == "real_staff").first()
+    assert stored_user.role == UserRole.FRONT_DESK
+
+
+def test_api_registration_staff_disabled_when_no_code_configured(client: TestClient, monkeypatch):
+    monkeypatch.setattr(config, "STAFF_SIGNUP_CODE", None)
+    response = client.post(
+        "/api/register",
+        json=_registration("no_config_staff", UserRole.PROVIDER, staff_code=STAFF_CODE),
+    )
+    assert response.status_code == 403
 
 
 def test_api_login_sets_secure_cookie(client: TestClient):
@@ -178,7 +239,7 @@ def test_api_login_sets_secure_cookie(client: TestClient):
         "first_name": "Cookie",
         "last_name": "Monster",
         "dob": "1990-01-01",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     reg_response = client.post("/api/register", json=registration_payload)
     assert reg_response.status_code == 200
@@ -213,7 +274,7 @@ def test_api_validate_username_duplicate(client: TestClient):
         "first_name": "Test",
         "last_name": "Case",
         "dob": "1990-01-01",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     client.post("/api/register", json=registration_payload)
     
@@ -236,7 +297,7 @@ def test_api_login_invalid_credentials(client: TestClient):
         "first_name": "Test",
         "last_name": "Case",
         "dob": "1990-01-01",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     client.post("/api/register", json=registration_payload)
     
@@ -261,7 +322,7 @@ def test_api_get_authenticated_profile_success(client: TestClient):
         "first_name": "Alex",
         "last_name": "Vance",
         "dob": "1992-08-24",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     client.post("/api/register", json=registration_payload)
     
@@ -304,7 +365,7 @@ def test_api_logout_clears_cookie(client: TestClient):
         "first_name": "Logout",
         "last_name": "Test",
         "dob": "1990-01-01",
-        "role": UserRole.PROVIDER.value
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE
     }
     client.post("/api/register", json=registration_payload)
     
@@ -364,7 +425,7 @@ def test_password_never_stored_plaintext(client: TestClient, db: Session):
         "first_name": "P",
         "last_name": "C",
         "dob": "1990-01-01",
-        "role": UserRole.PROVIDER.value,
+        "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE,
     }
     response = client.post("/api/register", json=registration_payload)
     assert response.status_code == 200
@@ -382,7 +443,7 @@ def test_login_cookie_secure_flag_matches_environment(client: TestClient, monkey
         "email": "secure_flag_dev@example.com",
         "password": "password123",
         "first_name": "Dev", "last_name": "User",
-        "dob": "1990-01-01", "role": UserRole.PROVIDER.value,
+        "dob": "1990-01-01", "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE,
     })
     dev_response = client.post("/api/login", json={
         "username": "secure_flag_dev_user", "password": "password123",
@@ -399,7 +460,7 @@ def test_login_cookie_secure_flag_matches_environment(client: TestClient, monkey
         "email": "secure_flag_prod@example.com",
         "password": "password123",
         "first_name": "Prod", "last_name": "User",
-        "dob": "1990-01-01", "role": UserRole.PROVIDER.value,
+        "dob": "1990-01-01", "role": UserRole.PROVIDER.value, "staff_code": STAFF_CODE,
     })
     prod_response = client.post("/api/login", json={
         "username": "secure_flag_prod_user", "password": "password123",

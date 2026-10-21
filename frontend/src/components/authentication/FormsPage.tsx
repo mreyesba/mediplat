@@ -25,7 +25,8 @@ function FormsPage({ type }: FormsPageProps) {
     const signupLastNameId = useId();
     const signupDobId = useId();
     const signupRoleId = useId();
-  
+    const signupStaffCodeId = useId();
+
     // Global form states
 
     const [email, setEmail] = useState('');
@@ -36,6 +37,9 @@ function FormsPage({ type }: FormsPageProps) {
     const [lastName, setLastName] = useState('');
     const [dob, setDob] = useState('');
     const [role, setRole] = useState('');
+    const [staffCode, setStaffCode] = useState('');
+    // Every role except patient needs the staff sign-up code
+    const needsStaffCode = role !== '' && role !== 'patient';
     const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Multistep view tracker (Starts at step 1)
@@ -97,7 +101,8 @@ function FormsPage({ type }: FormsPageProps) {
                                            first_name: firstName, 
                                            last_name: lastName,
                                            dob,
-                                           role }),
+                                           role,
+                                           ...(needsStaffCode && { staff_code: staffCode }) }),
                 });
                 
                 if (response.ok) {
@@ -341,6 +346,25 @@ function FormsPage({ type }: FormsPageProps) {
                         </select>
                     </div>
                 </div>
+
+                {needsStaffCode && (
+                <div className="flex flex-col gap-1">
+                    <label
+                        htmlFor={signupStaffCodeId}
+                        className="text-sm font-semibold text-slate-700">
+                        {t('account.staffCode')}
+                    </label>
+                    <input
+                        id={signupStaffCodeId}
+                        type="password"
+                        autoComplete="off"
+                        value={staffCode}
+                        onChange={(e) => setStaffCode(e.target.value)}
+                        className="border rounded px-3 py-2 outline-sky-500"
+                        required />
+                    <p className="text-xs text-slate-500">{t('account.staffCodeHint')}</p>
+                </div>
+                )}
             </div>
             )}
 

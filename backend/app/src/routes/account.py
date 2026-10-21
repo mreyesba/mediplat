@@ -1,3 +1,4 @@
+import secrets
 from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -5,6 +6,7 @@ from datetime import date
 from database import get_db
 from security import get_current_user, hash_password
 from config import logger
+import config
 import models
 
 router = APIRouter()
@@ -23,6 +25,16 @@ class UserRegister(BaseModel):
     last_name: str
     dob: date
     role: models.UserRole
+    # Required for every role except patient; checked against STAFF_SIGNUP_CODE
+    staff_code: str | None = None
+
+
+def is_valid_staff_code(code: str | None) -> bool:
+    expected = config.STAFF_SIGNUP_CODE
+    if not expected or not code:
+        return False
+    # Constant-time comparison so the code can't be guessed by response timing
+    return secrets.compare_digest(code.strip().encode(), expected.encode())
 
 # API endpoints
 
@@ -85,6 +97,13 @@ def register(
     clean_email = params.email.strip().lower()
 
     logger.info(f"Registering new user: {clean_username}")
+
+    if params.role != models.UserRole.PATIENT and not is_valid_staff_code(params.staff_code):
+        logger.info(f"Registration rejected - invalid staff code for role {params.role.value}: {clean_username}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid staff sign-up code."
+        )
 
     duplicate_check = db.query(models.User).filter(
         (models.User.username == clean_username) | (models.User.email == clean_email)
