@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE_URL } from '../../apiConfig';
 import { useTranslation } from 'react-i18next';
 
 interface NavbarProps {

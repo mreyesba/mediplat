@@ -356,8 +356,8 @@ export function CalendarView() {
     };
 
     return (
-    <div className="p-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-4">
-        <div className="flex justify-between items-center pb-4 border-b border-neutral-200">
+    <div className="px-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-2">
+        <div className="flex justify-between items-center border-b border-neutral-200">
         <div className="flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-neutral-700" />
             <h1 className="text-2xl font-bold text-neutral-800">{t('appointments.title')}</h1>

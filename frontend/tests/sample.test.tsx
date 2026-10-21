@@ -7,8 +7,8 @@ import { http, HttpResponse } from 'msw'
 import React from 'react'
 import { page } from 'vitest/browser' 
 
-import App from '../src/App.tsx'
-import AuthProvider from '../src/AuthContext.tsx'
+import App from '@/components/site/App.tsx'
+import AuthProvider from '@/components/authentication/AuthContext.tsx'
 
 // Helper function that mirrors your index.tsx provider hierarchy
 // Specify the exact route where FormsPage renders (e.g., '/account')
@@ -42,6 +42,11 @@ const mockHandlers = [
         return HttpResponse.json({ status: 'authenticated', username: body.username })
         }
         return HttpResponse.json({ detail: 'Invalid credentials.' }, { status: 400 })
+    }),
+
+    // Home lists upcoming appointments right after login
+    http.get('/api/get_events', async () => {
+        return HttpResponse.json([])
     }),
 ]
 

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, status, Request
 import jwt
 import bcrypt
 from config import SECRET_KEY
@@ -57,3 +58,27 @@ def verify_access_token(token: str) -> str | None:
     
     except jwt.PyJWTError:
         return None
+    
+# Secure cookie validation
+    
+def get_current_user(request: Request) -> str:
+    """Automatically extracts and validates the httpOnly cookie from incoming requests."""
+    print("Validating credentials")
+
+    token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
+    username = verify_access_token(token)
+
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or invalid"
+        )
+    
+    return username

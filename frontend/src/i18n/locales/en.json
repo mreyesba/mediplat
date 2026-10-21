@@ -9,7 +9,12 @@
   },
   "home": {
     "title": "Welcome to our clinic!",
-    "subtitle": "We take care of your health!"
+    "subtitle": "We take care of your health!",
+    "upcoming": "Upcoming appointments",
+    "viewCalendar": "View calendar",
+    "loading": "Loading...",
+    "noUpcoming": "No upcoming appointments.",
+    "loadFailed": "Couldn't load appointments."
   },
   "account": {
     "login": "Log in",
@@ -44,7 +49,9 @@
       "passwordsDontMatch": "Passwords do not match.",
       "registrationFailed": "Registration failed.",
       "loginFailed": "Login failed."
-    }
+    },
+    "staffCode": "Staff sign-up code",
+    "staffCodeHint": "Ask your clinic admin for this code."
   },
   "patients": {
     "title": "Patients",
@@ -82,7 +89,10 @@
       "history_one": "History ({{count}} entry)",
       "history_other": "History ({{count}} entries)",
       "noEntries": "No clinical entries recorded for this patient yet.",
-      "entryNumber": "Entry #{{id}}"
+      "entryNumber": "Entry #{{id}}",
+      "age": "Age",
+      "searchEntries": "Search entries...",
+      "noMatches": "No entries match \"{{term}}\"."
     },
     "entryForm": {
       "title": "New Clinical Entry",
@@ -92,8 +102,14 @@
       "saving": "Saving...",
       "submit": "Save Entry",
       "addFailed": "Failed to add entry.",
-      "networkError": "Network error."
-    }
+      "networkError": "Network error.",
+      "addTemplate": "Add predefined template",
+      "copyPrevious": "Copy previous entry",
+      "discardConfirm": "Discard this entry? What you've written will be lost.",
+      "older": "Older",
+      "newer": "Newer"
+    },
+    "lastEntry": "Last entry {{when}}"
   },
   "appointments": {
     "title": "Schedule Workspace",
