@@ -104,3 +104,34 @@ describe('Frontend Authentication View Flows', () => {
     await expect.element(logoutButton).toBeInTheDocument()
   })
 })
+
+describe('Session handling', () => {
+
+  test('a 401 mid-session sends the user to log in and says why', async () => {
+    worker.use(
+      http.get('/api/me', () => HttpResponse.json({ username: 'valid_user', first_name: 'Val' })),
+      http.get('/api/get_patients', () => new HttpResponse(null, { status: 401 })),
+    )
+
+    await renderWithProviders(<App />, { route: '/patients' })
+
+    await expect.element(page.getByText(/your session expired/i)).toBeInTheDocument()
+    await expect.element(page.getByLabelText(/username/i)).toBeInTheDocument()
+  })
+
+  test('logging in returns to the page that required it', async () => {
+    worker.use(
+      http.get('/api/get_patients', () => HttpResponse.json([])),
+    )
+
+    await renderWithProviders(<App />, { route: '/patients' })
+
+    // Not logged in: redirected to the login form, with no expiry message
+    await page.getByLabelText(/username/i).fill('valid_user')
+    await page.getByLabelText(/password/i).fill('password123')
+    await expect.element(page.getByText(/your session expired/i)).not.toBeInTheDocument()
+    await page.getByRole('button', { name: /log in/i }).click()
+
+    await expect.element(page.getByPlaceholder(/search patient/i)).toBeInTheDocument()
+  })
+})

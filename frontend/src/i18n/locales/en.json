@@ -56,7 +56,8 @@
       "loginFailed": "Login failed."
     },
     "staffCode": "Staff sign-up code",
-    "staffCodeHint": "Ask your clinic admin for this code."
+    "staffCodeHint": "Ask your clinic admin for this code.",
+    "sessionExpired": "Your session expired. Log in again to continue where you left off."
   },
   "patients": {
     "title": "Patients",

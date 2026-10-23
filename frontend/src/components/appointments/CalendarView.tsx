@@ -5,7 +5,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "../../apiConfig";
+import { apiFetch } from "../../api";
 import "./CalendarView.css";
 
 const locales = { "en-US": enUS, es };
@@ -162,7 +162,7 @@ export function CalendarView() {
     const fetchEvents = async () => {
         setErrorMessage("");
         try {
-            const res = await fetch(`${API_BASE_URL}/api/get_events`, {
+            const res = await apiFetch(`/api/get_events`, {
                 credentials: "include"
             });
 
@@ -253,7 +253,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch(`${API_BASE_URL}/api/update_event`, {
+                const response = await apiFetch(`/api/update_event`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -293,7 +293,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch(`${API_BASE_URL}/api/create_event`, {
+                const response = await apiFetch(`/api/create_event`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -338,7 +338,7 @@ export function CalendarView() {
         setEvents((prev) => prev.filter((evt) => evt.id !== editingEventId));
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/delete_event?id=${editingEventId}`, {
+            const response = await apiFetch(`/api/delete_event?id=${editingEventId}`, {
                 method: "DELETE",
                 credentials: "include",
             });

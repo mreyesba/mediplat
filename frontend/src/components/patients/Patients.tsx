@@ -6,7 +6,7 @@ import { es } from "date-fns/locale/es";
 import type { Patient } from "./types";
 import { CreatePatientForm } from "./CreatePatientForm";
 import { PatientDetailView } from "./PatientDetailView";
-import { API_BASE_URL } from "../../apiConfig";
+import { apiFetch } from "../../api";
 
 const lastEntryDate = (patient: Patient) =>
     patient.entries.reduce<Date | null>((latest, entry) => {
@@ -35,7 +35,7 @@ function Patients() {
         setIsLoading(true);
         setErrorMessage("");
         try {
-            const res = await fetch(`${API_BASE_URL}/api/get_patients`, {
+            const res = await apiFetch(`/api/get_patients`, {
                 credentials: "include"
             });
 
