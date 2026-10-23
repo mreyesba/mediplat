@@ -1,11 +1,16 @@
 {
+  "app": {
+    "loading": "Loading..."
+  },
   "navbar": {
     "home": "Home",
     "patients": "Patients",
     "appointments": "Appointments",
     "account": "Account",
     "dashboards": "Dashboards",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "title": "Welcome to our clinic!",
@@ -109,7 +114,8 @@
       "older": "Older",
       "newer": "Newer"
     },
-    "lastEntry": "Last entry {{when}}"
+    "lastEntry": "Last entry {{when}}",
+    "backToList": "Patients"
   },
   "appointments": {
     "title": "Schedule Workspace",

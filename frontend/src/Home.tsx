@@ -54,7 +54,7 @@ function Home() {
 
     return (
         <div>
-            <section className="hero-section bg-slate-100 py-100 text-center">
+            <section className="hero-section bg-slate-100 py-16 md:py-100 px-4 text-center">
                 <h1 className="text-4x1 font-bold mb-4">
                     {t('home.title')}
                 </h1>

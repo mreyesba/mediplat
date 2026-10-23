@@ -97,6 +97,9 @@ describe('Frontend Authentication View Flows', () => {
     const homeHeading = page.getByText(/welcome to our clinic!/i)
     await expect.element(homeHeading).toBeInTheDocument()
 
+    // The test viewport is phone-sized, so the nav links sit behind the menu toggle
+    await page.getByRole('button', { name: /open menu/i }).click()
+
     const logoutButton = page.getByRole('button', { name: /log out/i })
     await expect.element(logoutButton).toBeInTheDocument()
   })

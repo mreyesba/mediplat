@@ -23,6 +23,13 @@ function Patients() {
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    // Phones show either the patient list or the main panel, never both
+    const [showListOnMobile, setShowListOnMobile] = useState(true);
+
+    const startCreating = () => {
+        setIsCreating(true);
+        setShowListOnMobile(false);
+    };
 
     const fetchPatients = async () => {
         setIsLoading(true);
@@ -72,12 +79,19 @@ function Patients() {
     return (
         <div className="flex h-screen bg-slate-50 text-slate-800 overflow-hidden">
             {/* MAIN PANEL */}
-            <main className="flex-1 flex flex-col h-full overflow-hidden border-r">
+            <main className={`${showListOnMobile ? "hidden md:flex" : "flex"} flex-1 flex-col h-full overflow-hidden border-r`}>
             {/* Top Bar */}
-            <div className="bg-white border-b px-6 flex justify-between items-center shadow-sm">
-                <h1 className="text-xl font-bold text-slate-800">{t('patients.title')}</h1>
+            <div className="bg-white border-b px-4 md:px-6 flex justify-between items-center gap-2 shadow-sm">
                 <button
-                onClick={() => setIsCreating(true)}
+                    type="button"
+                    onClick={() => setShowListOnMobile(true)}
+                    className="md:hidden py-3 text-sm font-medium text-sky-600"
+                >
+                    ‹ {t('patients.backToList')}
+                </button>
+                <h1 className="hidden md:block text-xl font-bold text-slate-800">{t('patients.title')}</h1>
+                <button
+                onClick={startCreating}
                 className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
                 >
                 {t('patients.addNew')}
@@ -85,14 +99,17 @@ function Patients() {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 {isCreating ? (
                 <CreatePatientForm
                     onSuccess={() => {
                     setIsCreating(false);
                     fetchPatients();
                     }}
-                    onCancel={() => setIsCreating(false)}
+                    onCancel={() => {
+                    setIsCreating(false);
+                    setShowListOnMobile(true);
+                    }}
                 />
                 ) : selectedPatient ? (
                 <PatientDetailView
@@ -109,8 +126,18 @@ function Patients() {
             </main>
 
             {/* SIDEBAR: PATIENT LIST */}
-            <aside className="w-80 bg-white flex flex-col h-full border-l">
+            <aside className={`${showListOnMobile ? "flex" : "hidden md:flex"} w-full md:w-80 bg-white flex-col h-full border-l`}>
             <div className="p-4 border-b space-y-3">
+                {/* Phones: the main panel (with its title bar) is hidden while the list shows */}
+                <div className="md:hidden flex justify-between items-center gap-2">
+                    <h1 className="text-xl font-bold text-slate-800 m-0">{t('patients.title')}</h1>
+                    <button
+                        onClick={startCreating}
+                        className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-2 rounded-lg text-sm transition"
+                    >
+                        {t('patients.addNew')}
+                    </button>
+                </div>
                 <input
                 type="text"
                 placeholder={t('patients.searchPlaceholder')}
@@ -131,6 +158,7 @@ function Patients() {
                     onClick={() => {
                         setSelectedIdentifier(patient.identifier);
                         setIsCreating(false);
+                        setShowListOnMobile(false);
                     }}
                     className={`w-full text-left p-4 transition flex flex-col gap-1 ${
                         isSelected ? "bg-sky-50 border-l-4 border-sky-600" : "hover:bg-slate-50"

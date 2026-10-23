@@ -140,7 +140,10 @@ export function CalendarView() {
     };
     const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-    const [view, setView] = useState<View>(Views.WEEK);
+    // Seven columns don't fit on a phone, so start those on the day view
+    const [view, setView] = useState<View>(() =>
+        window.matchMedia("(max-width: 767px)").matches ? Views.DAY : Views.WEEK
+    );
     const [date, setDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -356,8 +359,8 @@ export function CalendarView() {
     };
 
     return (
-    <div className="px-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-2">
-        <div className="flex justify-between items-center border-b border-neutral-200">
+    <div className="px-3 sm:px-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-2">
+        <div className="flex flex-wrap justify-between items-center gap-2 py-2 border-b border-neutral-200">
         <div className="flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-neutral-700" />
             <h1 className="text-2xl font-bold text-neutral-800">{t('appointments.title')}</h1>

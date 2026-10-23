@@ -61,7 +61,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
     };
 
     return (
-        <div className="bg-white border rounded-xl p-6 shadow-sm max-w-xl">
+        <div className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm max-w-xl">
             <div className="flex justify-between items-center border-b pb-3 mb-4">
             <h2 className="text-xl font-bold text-slate-800">{t('patients.form.title')}</h2>
             <button
@@ -73,7 +73,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientFirstNameId} className="text-xs font-semibold text-slate-700">
                     {t('patients.form.firstName')}
@@ -101,7 +101,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
                 <label htmlFor={patientDobId} className="text-xs font-semibold text-slate-700">
                     {t('patients.form.dob')}

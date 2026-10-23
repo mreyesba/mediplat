@@ -103,7 +103,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <div className="flex justify-between items-center gap-4 border-b px-6 py-4 shrink-0">
+            <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 border-b px-4 sm:px-6 py-3 sm:py-4 shrink-0">
                 <div className="text-left">
                     <h2 className="text-lg font-bold text-slate-800">
                         {readOnly
@@ -155,7 +155,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
             </div>
 
             {!readOnly && (
-                <div className="flex gap-2 min-h-0 px-6 py-4 shrink-0">
+                <div className="flex flex-wrap gap-2 min-h-0 px-4 sm:px-6 py-3 sm:py-4 shrink-0">
                         <button
                             type="button"
                             onClick={onAddTemplate}
@@ -177,7 +177,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                 </div>
             )}
 
-            <div className="flex-1 min-h-0 px-6 py-4">
+            <div className="flex-1 min-h-0 px-4 sm:px-6 py-3 sm:py-4">
                 <textarea
                     autoFocus={!readOnly}
                     readOnly={readOnly}
@@ -191,7 +191,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                 />
             </div>
 
-            <div className="flex justify-between items-center border-t px-6 py-4 shrink-0">
+            <div className="flex justify-between items-center border-t px-4 sm:px-6 py-3 sm:py-4 shrink-0">
                 <p className="text-xs text-red-600">{error}</p>
                 {readOnly ? (
                     <button
