@@ -5,7 +5,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "../../apiConfig";
+import { apiFetch } from "../../api";
 import "./CalendarView.css";
 
 const locales = { "en-US": enUS, es };
@@ -140,7 +140,10 @@ export function CalendarView() {
     };
     const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-    const [view, setView] = useState<View>(Views.WEEK);
+    // Seven columns don't fit on a phone, so start those on the day view
+    const [view, setView] = useState<View>(() =>
+        window.matchMedia("(max-width: 767px)").matches ? Views.DAY : Views.WEEK
+    );
     const [date, setDate] = useState(new Date());
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -159,7 +162,7 @@ export function CalendarView() {
     const fetchEvents = async () => {
         setErrorMessage("");
         try {
-            const res = await fetch(`${API_BASE_URL}/api/get_events`, {
+            const res = await apiFetch(`/api/get_events`, {
                 credentials: "include"
             });
 
@@ -250,7 +253,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch(`${API_BASE_URL}/api/update_event`, {
+                const response = await apiFetch(`/api/update_event`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -290,7 +293,7 @@ export function CalendarView() {
 
             // 2. Perform API call in background
             try {
-                const response = await fetch(`${API_BASE_URL}/api/create_event`, {
+                const response = await apiFetch(`/api/create_event`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
@@ -335,7 +338,7 @@ export function CalendarView() {
         setEvents((prev) => prev.filter((evt) => evt.id !== editingEventId));
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/delete_event?id=${editingEventId}`, {
+            const response = await apiFetch(`/api/delete_event?id=${editingEventId}`, {
                 method: "DELETE",
                 credentials: "include",
             });
@@ -356,8 +359,8 @@ export function CalendarView() {
     };
 
     return (
-    <div className="px-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-2">
-        <div className="flex justify-between items-center border-b border-neutral-200">
+    <div className="px-3 sm:px-6 max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-neutral-100 min-h-screen flex flex-col gap-2">
+        <div className="flex flex-wrap justify-between items-center gap-2 py-2 border-b border-neutral-200">
         <div className="flex items-center gap-2">
             <CalendarIcon className="h-6 w-6 text-neutral-700" />
             <h1 className="text-2xl font-bold text-neutral-800">{t('appointments.title')}</h1>

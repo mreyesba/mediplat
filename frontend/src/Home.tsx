@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { API_BASE_URL } from './apiConfig';
+import { apiFetch } from './api';
 
 const UPCOMING_LIMIT = 5;
 
@@ -20,7 +20,7 @@ function Home() {
     useEffect(() => {
         const fetchUpcoming = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/get_events`, {
+                const res = await apiFetch(`/api/get_events`, {
                     credentials: 'include',
                 });
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -54,7 +54,7 @@ function Home() {
 
     return (
         <div>
-            <section className="hero-section bg-slate-100 py-100 text-center">
+            <section className="hero-section bg-slate-100 py-16 md:py-100 px-4 text-center">
                 <h1 className="text-4x1 font-bold mb-4">
                     {t('home.title')}
                 </h1>

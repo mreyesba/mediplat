@@ -11,7 +11,7 @@ interface FormsPageProps {
 
 function FormsPage({ type }: FormsPageProps) {
     const { t } = useTranslation();
-    const { setUser } = useAuth();
+    const { setUser, sessionExpired } = useAuth();
     const navigate = useNavigate();
 
     // Generate accessible ID pairs automatically
@@ -143,8 +143,8 @@ function FormsPage({ type }: FormsPageProps) {
                     first_name: data.first_name || 'User' 
                 });
                 
-                // 2. JUMP TO DASHBOARD OR HOME PAGE INSTANTLY WITHOUT PAGE RELOADS
-                navigate('/');
+                // 2. No navigate() here: the /account route redirects once user is set,
+                //    back to the page that asked for the login (see App.tsx)
             } else {
                 const err = await response.json();
                 setErrorMessage(err.detail || t('account.errors.loginFailed'));
@@ -162,6 +162,11 @@ function FormsPage({ type }: FormsPageProps) {
                 className="flex flex-col gap-4 border p-4 rounded bg-white shadow-sm" 
                 onSubmit={handleLoginSubmit}>
                 <h2 className="text-xl font-bold">{t('account.welcomeBack')}</h2>
+                {sessionExpired && (
+                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                        {t('account.sessionExpired')}
+                    </p>
+                )}
                 <div className="flex flex-col gap-1">
                     <label
                         htmlFor={loginUsernameId}
