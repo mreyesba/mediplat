@@ -36,7 +36,10 @@ jobs:
           # No dev proxy in production — the built frontend calls this URL
           # directly for every /api/* request. Keep in sync with the
           # backend's CORS_ORIGINS on Render.
-          VITE_API_URL: https://mediplat.onrender.com
+          # A subdomain of canper.mx (custom domain on Render), not
+          # mediplat.onrender.com: browsers treat a cookie from another site
+          # as third-party, and Safari blocks those, which drops the session.
+          VITE_API_URL: https://api.canper.mx
 
       - uses: actions/configure-pages@v6
 
