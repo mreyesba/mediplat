@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../api";
+import { entryDraftKey } from "../../storageKeys";
 import type { Entry } from "./types";
 import rawTextContentEs from '../../assets/entry_templates/template_es.txt?raw';
 import rawTextContentEn from '../../assets/entry_templates/template_en.txt?raw';
@@ -53,7 +54,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
 }) => {
     const { t, i18n } = useTranslation();
     const readOnly = entry !== undefined;
-    const draftKey = `entryDraft:${patientIdentifier}`;
+    const draftKey = entryDraftKey(patientIdentifier);
     const [info, setInfo] = useState(() => entry?.info ?? readDraft(draftKey));
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
