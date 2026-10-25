@@ -1,11 +1,16 @@
 {
+  "app": {
+    "loading": "Cargando..."
+  },
   "navbar": {
     "home": "Inicio",
     "patients": "Pacientes",
     "appointments": "Citas",
     "account": "Cuenta",
     "dashboards": "Tableros",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
   },
   "home": {
     "title": "¡Bienvenido a nuestra clínica!",
@@ -51,7 +56,8 @@
       "loginFailed": "Error al iniciar sesión."
     },
     "staffCode": "Código de registro del personal",
-    "staffCodeHint": "Pídele este código al administrador de tu clínica."
+    "staffCodeHint": "Pídele este código al administrador de tu clínica.",
+    "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo para continuar donde te quedaste."
   },
   "patients": {
     "title": "Pacientes",
@@ -109,7 +115,8 @@
       "older": "Anterior",
       "newer": "Siguiente"
     },
-    "lastEntry": "Última entrada {{when}}"
+    "lastEntry": "Última entrada {{when}}",
+    "backToList": "Pacientes"
   },
   "appointments": {
     "title": "Espacio de citas",

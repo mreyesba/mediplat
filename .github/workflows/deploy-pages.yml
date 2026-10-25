@@ -36,7 +36,15 @@ jobs:
           # No dev proxy in production — the built frontend calls this URL
           # directly for every /api/* request. Keep in sync with the
           # backend's CORS_ORIGINS on Render.
-          VITE_API_URL: https://mediplat.onrender.com
+          # A subdomain of canper.mx (custom domain on Render), not
+          # mediplat.onrender.com: browsers treat a cookie from another site
+          # as third-party, and Safari blocks those, which drops the session.
+          VITE_API_URL: https://api.canper.mx
+
+      # GitHub Pages only knows about real files, so reloading /account or
+      # /patients would hit its own 404 page. Serving the app as 404.html lets
+      # React Router take over and render the right route.
+      - run: cp dist/index.html dist/404.html
 
       - uses: actions/configure-pages@v6
 
