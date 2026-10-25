@@ -2,7 +2,7 @@ import './FormsPage.css';
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 import { API_BASE_URL } from '../../apiConfig';
 
 interface FormsPageProps {
@@ -11,7 +11,7 @@ interface FormsPageProps {
 
 function FormsPage({ type }: FormsPageProps) {
     const { t } = useTranslation();
-    const { setUser } = useAuth();
+    const { setUser, sessionExpired } = useAuth();
     const navigate = useNavigate();
 
     // Generate accessible ID pairs automatically
@@ -140,11 +140,8 @@ function FormsPage({ type }: FormsPageProps) {
                 // 1. Sync data to the global context state matching our defined interface blueprint
                 setUser({ 
                     username: data.username, 
-                    first_name: data.first_name || 'User' 
+                    first_name: data.first_name || 'User'
                 });
-                
-                // 2. JUMP TO DASHBOARD OR HOME PAGE INSTANTLY WITHOUT PAGE RELOADS
-                navigate('/');
             } else {
                 const err = await response.json();
                 setErrorMessage(err.detail || t('account.errors.loginFailed'));
@@ -162,6 +159,11 @@ function FormsPage({ type }: FormsPageProps) {
                 className="flex flex-col gap-4 border p-4 rounded bg-white shadow-sm" 
                 onSubmit={handleLoginSubmit}>
                 <h2 className="text-xl font-bold">{t('account.welcomeBack')}</h2>
+                {sessionExpired && (
+                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                        {t('account.sessionExpired')}
+                    </p>
+                )}
                 <div className="flex flex-col gap-1">
                     <label
                         htmlFor={loginUsernameId}

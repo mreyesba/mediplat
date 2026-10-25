@@ -118,6 +118,16 @@ html {
   scroll-behavior: smooth;
 }
 
+/* iOS Safari zooms the whole page when a field under 16px gets focus.
+   Unlayered, so it wins over Tailwind's text-sm/text-xs on phones only. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Custom Modern Theme Overrides for React Big Calendar */
 
 /* 1. Global Container Styling */
@@ -127,7 +137,17 @@ html {
 
 /* 2. Header and Navigation Row Cleanup */
 .rbc-toolbar {
-  @apply mb-6 !flex flex-row justify-between items-center gap-4;
+  @apply mb-6 !flex flex-row flex-wrap justify-between items-center gap-4;
+}
+
+/* Phones: stack the toolbar so the date label and view buttons don't overflow */
+@media (max-width: 767px) {
+  .rbc-toolbar {
+    @apply flex-col items-stretch gap-2 mb-3;
+  }
+  .rbc-toolbar .rbc-btn-group {
+    @apply justify-center;
+  }
 }
 
 .rbc-toolbar-label {

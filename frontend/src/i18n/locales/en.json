@@ -1,11 +1,16 @@
 {
+  "app": {
+    "loading": "Loading..."
+  },
   "navbar": {
     "home": "Home",
     "patients": "Patients",
     "appointments": "Appointments",
     "account": "Account",
     "dashboards": "Dashboards",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "title": "Welcome to our clinic!",
@@ -51,7 +56,8 @@
       "loginFailed": "Login failed."
     },
     "staffCode": "Staff sign-up code",
-    "staffCodeHint": "Ask your clinic admin for this code."
+    "staffCodeHint": "Ask your clinic admin for this code.",
+    "sessionExpired": "Your session expired. Log in again to continue where you left off."
   },
   "patients": {
     "title": "Patients",
@@ -109,7 +115,8 @@
       "older": "Older",
       "newer": "Newer"
     },
-    "lastEntry": "Last entry {{when}}"
+    "lastEntry": "Last entry {{when}}",
+    "backToList": "Patients"
   },
   "appointments": {
     "title": "Schedule Workspace",

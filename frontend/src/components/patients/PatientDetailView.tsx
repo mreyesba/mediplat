@@ -57,14 +57,14 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
     };
 
     return (
-        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        <div className="flex-1 md:p-6 space-y-6 overflow-y-auto">
             {/* Patient Header */}
-            <div className="bg-white p-5 rounded-xl border shadow-sm flex justify-between items-start">
-            <div>
+            <div className="bg-white p-4 sm:p-5 rounded-xl border shadow-sm flex flex-col sm:flex-row justify-between items-stretch sm:items-start gap-3">
+            <div className="text-left">
                 <h2 className="flex text-2xl font-bold text-slate-900">
                 {patient.first_name} {patient.last_name}
                 </h2>
-                <div className="flex gap-4 text-xs text-slate-500 mt-1">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 mt-1">
                 <span>{t('patients.detail.id')}: <strong className="text-slate-700">{patient.identifier}</strong></span>
                 <span>{t('patients.detail.dob')}: <strong className="text-slate-700">{patient.dob}</strong></span>
                 <span>{t('patients.detail.age')}: <strong className="text-slate-700">{calculateAge(patient.dob)}</strong></span>
@@ -81,7 +81,8 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
             {(isAddingEntry || selectedEntry) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-[90vw] h-[85vh] max-w-5xl flex flex-col overflow-hidden">
+                    {/* Full screen on phones; dvh keeps Safari's toolbar from covering the buttons */}
+                    <div className="bg-white sm:rounded-2xl shadow-2xl w-full h-dvh sm:w-[90vw] sm:h-[85dvh] max-w-5xl flex flex-col overflow-hidden">
                         <CreateEntryForm
                             key={selectedEntry?.id ?? "new"}
                             patientIdentifier={patient.identifier}
@@ -101,8 +102,8 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
             {/* Entry History */}
             <div className="space-y-3">
-            <div className="flex justify-between items-center gap-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-4">
+                <h3 className="text-left text-xs font-bold uppercase tracking-wider text-slate-400">
                     {t('patients.detail.history', { count: patient.entries.length })}
                 </h3>
                 {patient.entries.length > 0 && (
@@ -111,7 +112,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                         value={entrySearch}
                         onChange={(e) => setEntrySearch(e.target.value)}
                         placeholder={t('patients.detail.searchEntries')}
-                        className="w-64 px-3 py-1.5 border rounded-lg text-sm bg-white outline-sky-500"
+                        className="w-full sm:w-64 px-3 py-1.5 border rounded-lg text-sm bg-white outline-sky-500"
                     />
                 )}
             </div>
