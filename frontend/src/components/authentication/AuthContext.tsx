@@ -1,33 +1,14 @@
-import { createContext,
-         useState,
+import { useState,
          useEffect,
-         useContext,
          useRef,
-         type ReactNode,
-         type Dispatch,
-         type SetStateAction } from 'react';
-import { API_BASE_URL } from '../../apiConfig';
-import { SESSION_EXPIRED_EVENT } from '../../api';
+         type ReactNode } from 'react';
+import { apiFetch, SESSION_EXPIRED_EVENT } from '../../api';
+import { AuthContext, type User } from './useAuth';
 
-// 1. Declare the strict shape of our logged-in user profile metadata
-export interface User {
-    username: string;
-    first_name: string;
-}
-
-// 2. Define the structural blueprint for our global context provider properties
-interface AuthContextType {
-    user: User | null;
-    setUser: Dispatch<SetStateAction<User | null>>;
-    loading: boolean;
-    // True once a session has ended on its own (not via Log out), so the login page can say why
-    sessionExpired: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
+// A 401 here ends the session through apiFetch; a network error just yields
+// null without ending it, so a flaky connection doesn't log anyone out
 const fetchMe = (): Promise<User | null> =>
-    fetch(`${API_BASE_URL}/api/me`, { credentials: 'include' })
+    apiFetch('/api/me')
         .then((res) => (res.ok ? res.json() : null))
         .catch(() => null);
 
@@ -64,10 +45,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!user) return;
         const onVisible = () => {
-            if (document.visibilityState !== 'visible') return;
-            fetchMe().then((data) => {
-                if (!data) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-            });
+            if (document.visibilityState === 'visible') fetchMe();
         };
         document.addEventListener('visibilitychange', onVisible);
         return () => document.removeEventListener('visibilitychange', onVisible);
@@ -81,14 +59,3 @@ function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export default AuthProvider;
-
-// Custom hook with a built-in safety check to ensure it's used inside an AuthProvider
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-
-    if (!context) {
-        throw new Error('useAuth must be executed cleanly inside an explicit <AuthProvider> wrapper tree.');
-    }
-
-    return context;
-};

@@ -2,7 +2,7 @@ import './FormsPage.css';
 import { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from './AuthContext';
+import { useAuth } from './useAuth';
 import { API_BASE_URL } from '../../apiConfig';
 
 interface FormsPageProps {
@@ -140,11 +140,8 @@ function FormsPage({ type }: FormsPageProps) {
                 // 1. Sync data to the global context state matching our defined interface blueprint
                 setUser({ 
                     username: data.username, 
-                    first_name: data.first_name || 'User' 
+                    first_name: data.first_name || 'User'
                 });
-                
-                // 2. No navigate() here: the /account route redirects once user is set,
-                //    back to the page that asked for the login (see App.tsx)
             } else {
                 const err = await response.json();
                 setErrorMessage(err.detail || t('account.errors.loginFailed'));

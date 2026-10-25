@@ -7,7 +7,7 @@ import Navbar from './Navbar.tsx';
 import Home from '../../Home.tsx';
 import Account from '../../Account.tsx';
 import FormsPage from '../authentication/FormsPage.tsx';
-import { useAuth } from '../authentication/AuthContext.tsx';
+import { useAuth } from '../authentication/useAuth.ts';
 import Patients from '../patients/Patients.tsx';
 import Appointments from '../appointments/Appointment.tsx';
 
