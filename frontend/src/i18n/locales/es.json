@@ -57,7 +57,8 @@
     },
     "staffCode": "Código de registro del personal",
     "staffCodeHint": "Pídele este código al administrador de tu clínica.",
-    "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo para continuar donde te quedaste."
+    "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo para continuar donde te quedaste.",
+    "forgotPassword": "¿Olvidaste tu usuario o contraseña? Contacta al administrador de tu clínica."
   },
   "patients": {
     "title": "Pacientes",

@@ -199,6 +199,9 @@ function FormsPage({ type }: FormsPageProps) {
                     className="bg-sky-600 text-white font-bold py-2 rounded">
                     {t('account.logIn')}
                 </button>
+                <p className="text-sm text-slate-600 text-center">
+                    {t('account.forgotPassword')}
+                </p>
             </form>
         );
     }

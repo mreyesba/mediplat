@@ -67,6 +67,29 @@ uv run fastapi dev src/main.py
   * **Interactive API Playground Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
   * *Note: Tables are created automatically against the Postgres database on first boot — make sure the Docker container from the step above is running first.*
 
+### Account Recovery (manual, until there's an email server)
+
+Users who forget their username or password contact the clinic admin, who recovers the account with a local script. It talks straight to the database — there is no HTTP endpoint for it. From `backend/app`:
+
+```bash
+# Look someone up by any part of their username, email or name
+uv run python src/admin.py find maria
+
+# Set a random temporary password and print it — send it to the user privately
+uv run python src/admin.py reset-password maria_lopez
+
+# Or type the new password yourself
+uv run python src/admin.py reset-password maria_lopez --prompt
+```
+
+To recover an account in production, override `DATABASE_URL` with the Neon connection string for that one command instead of editing `.env` (environment variables take precedence over `.env`):
+
+```bash
+DATABASE_URL='postgresql+psycopg://...neon.tech/...' uv run python src/admin.py find maria
+```
+
+Notes: sessions already open stay valid until their 8-hour cookie expires, and the temporary password isn't forced to change on next login.
+
 ### Frontend Setup (Vite + React)
 
 1. Open a separate terminal instance and target the frontend directory:
