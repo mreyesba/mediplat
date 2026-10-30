@@ -16,7 +16,7 @@ import sys
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from database import SessionLocal, engine
 from security import hash_password
 import models
 
@@ -67,13 +67,28 @@ def reset_password(db: Session, username: str, new_password: str | None = None) 
 
 
 def print_users(users: list[models.User]) -> None:
+    """Prints users as an aligned table, plain ASCII so any terminal renders it."""
+    rows = [("ID", "USERNAME", "EMAIL", "ROLE", "NAME")]
     for user in users:
         info = user.staff_info or user.patient_profile
         name = f"{info.first_name} {info.last_name}" if info else "-"
-        print(f"[{user.id}] {user.username} <{user.email}> {user.role.value} — {name}")
+        rows.append((str(user.id), user.username, user.email, user.role.value, name))
+
+    widths = [max(len(row[col]) for row in rows) for col in range(len(rows[0]))]
+    rows.insert(1, tuple("-" * width for width in widths))
+
+    for row in rows:
+        print("  ".join(cell.ljust(width) for cell, width in zip(row, widths)).rstrip())
+
+    print(f"\n{len(users)} user(s) found.")
 
 
 def main() -> None:
+    # Windows can default to a legacy code page, which mangles accented names
+    sys.stdout.reconfigure(encoding="utf-8")
+    # DEBUG=True in .env makes the engine log every SQL statement, burying the output
+    engine.echo = False
+
     parser = argparse.ArgumentParser(description="Manual account recovery.")
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -92,7 +107,8 @@ def main() -> None:
             users = find_users(db, args.query)
             if not users:
                 print(f"No users match '{args.query}'.")
-            print_users(users)
+            else:
+                print_users(users)
             return
 
         typed_password = None
