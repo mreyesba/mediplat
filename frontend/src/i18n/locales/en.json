@@ -57,7 +57,8 @@
     },
     "staffCode": "Staff sign-up code",
     "staffCodeHint": "Ask your clinic admin for this code.",
-    "sessionExpired": "Your session expired. Log in again to continue where you left off."
+    "sessionExpired": "Your session expired. Log in again to continue where you left off.",
+    "forgotPassword": "Forgot your username or password? Contact your clinic administrator."
   },
   "patients": {
     "title": "Patients",

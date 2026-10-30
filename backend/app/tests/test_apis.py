@@ -10,6 +10,7 @@ from database import Base, SessionLocal
 from models import UserInfo, User, UserRole, Patient, PatientEntry
 import config
 from main import app, get_db
+import admin
 
 # Isolated testing engine, pointed at the postgres-test container
 # (docker-compose.yml) — never the dev database.
@@ -490,3 +491,58 @@ def test_role_enum_rejects_invalid_value_at_db_level(db: Session):
         db.commit()
 
 
+
+
+def register_recovery_user(client: TestClient):
+    registration_payload = {
+        "username": "forgetful_user",
+        "email": "forgetful@example.com",
+        "password": "old_password123",
+        "first_name": "Olvido",
+        "last_name": "Mendez",
+        "dob": "1990-01-01",
+        "role": UserRole.PATIENT.value,
+    }
+    response = client.post("/api/register", json=registration_payload)
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("query", ["forgetful", "FORGETFUL@example", "olvido", "mendez"])
+def test_admin_find_users_matches_username_email_or_name(client: TestClient, db: Session, query):
+    register_recovery_user(client)
+
+    usernames = [user.username for user in admin.find_users(db, query)]
+
+    assert usernames == ["forgetful_user"]
+
+
+def test_admin_reset_password_generates_working_temporary_password(client: TestClient, db: Session):
+    register_recovery_user(client)
+
+    temporary_password = admin.reset_password(db, "  Forgetful_User ")
+    assert temporary_password
+
+    old_login = client.post("/api/login", json={
+        "username": "forgetful_user", "password": "old_password123"
+    })
+    assert old_login.status_code == 400
+
+    new_login = client.post("/api/login", json={
+        "username": "forgetful_user", "password": temporary_password
+    })
+    assert new_login.status_code == 200
+
+
+def test_admin_reset_password_accepts_typed_password(client: TestClient, db: Session):
+    register_recovery_user(client)
+
+    assert admin.reset_password(db, "forgetful_user", "typed_password456") == "typed_password456"
+
+    response = client.post("/api/login", json={
+        "username": "forgetful_user", "password": "typed_password456"
+    })
+    assert response.status_code == 200
+
+
+def test_admin_reset_password_unknown_user_returns_none(db: Session):
+    assert admin.reset_password(db, "nobody_by_this_name") is None
