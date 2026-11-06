@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './useAuth';
 import { API_BASE_URL } from '../../apiConfig';
+import { usePostHog } from '@posthog/react';
 
 interface FormsPageProps {
   type: 'login' | 'signup';
@@ -13,6 +14,7 @@ function FormsPage({ type }: FormsPageProps) {
     const { t } = useTranslation();
     const { setUser, sessionExpired } = useAuth();
     const navigate = useNavigate();
+    const posthog = usePostHog();
 
     // Generate accessible ID pairs automatically
     const loginUsernameId = useId();
@@ -65,7 +67,9 @@ function FormsPage({ type }: FormsPageProps) {
                 
                 if (response.ok) {
                     setStep(2); // Advance to username choice
+                    posthog?.capture('signup-email-success');
                 } else {
+                    posthog?.capture('signup-failure', { step, status: response.status });
                     const err = await response.json();
                     setErrorMessage(err.detail || t('account.errors.emailValidationFailed'));
                 }
@@ -80,13 +84,16 @@ function FormsPage({ type }: FormsPageProps) {
 
                 if (response.ok) {
                     setStep(3); // Advance to account creation
+                    posthog?.capture('signup-username-success');
                 } else {
+                    posthog?.capture('signup-failure', { step, status: response.status });
                     const err = await response.json();
                     setErrorMessage(err.detail || t('account.errors.usernameUnavailable'));
                 }
             } else if (step === 3) {
                 if (password !== passwordConfirm) {
                     setErrorMessage(t('account.errors.passwordsDontMatch'));
+                    posthog?.capture('signup-failure', { step, reason: 'password-mismatch' });
                     setLoading(false);
                     return;
                 }
@@ -106,14 +113,17 @@ function FormsPage({ type }: FormsPageProps) {
                 });
                 
                 if (response.ok) {
+                    posthog?.capture('signup-success', { role });
                     navigate('/account/login');
                 } else {
+                    posthog?.capture('signup-failure', { step, status: response.status });
                     const err = await response.json();
                     setErrorMessage(err.detail || t('account.errors.registrationFailed'));
                 }
             }
         } catch (err) {
             console.error('Network pipeline crash:', err);
+            posthog?.capture('signup-failure', { step, reason: 'network' });
         } finally {
             setLoading(false);
         }
@@ -138,16 +148,22 @@ function FormsPage({ type }: FormsPageProps) {
                 const data = await response.json();
                 
                 // 1. Sync data to the global context state matching our defined interface blueprint
-                setUser({ 
-                    username: data.username, 
-                    first_name: data.first_name || 'User'
+                setUser({
+                    id: data.id,
+                    username: data.username,
+                    first_name: data.first_name,
+                    role: data.role,
                 });
+                // Captured before identify runs, so PostHog links it to the visitor's anonymous history
+                posthog?.capture('login-success');
             } else {
+                posthog?.capture('login-failure', { status: response.status });
                 const err = await response.json();
                 setErrorMessage(err.detail || t('account.errors.loginFailed'));
             }
         } catch (err) {
             console.error('Failed to submit payload:', err);
+            posthog?.capture('login-failure', { reason: 'network' });
         }
     };
 
@@ -380,7 +396,10 @@ function FormsPage({ type }: FormsPageProps) {
             {step > 1 && (
                 <button
                     type="button"
-                    onClick={() => setStep(step - 1)}
+                    onClick={() => {
+                        setStep(step - 1);
+                        posthog?.capture('signup-back', { from_step: step });
+                    }}
                     className="border px-4 py-2 rounded text-sm hover:bg-slate-50">
                     {t('account.back')}
                 </button>

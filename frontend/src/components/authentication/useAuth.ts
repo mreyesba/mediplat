@@ -8,8 +8,11 @@ import { createContext,
 
 // 1. Declare the strict shape of our logged-in user profile metadata
 export interface User {
+    // Database id; also PostHog's distinct_id, so analytics never carry the username
+    id: number;
     username: string;
     first_name: string;
+    role: string;
 }
 
 // 2. Define the structural blueprint for our global context provider properties
