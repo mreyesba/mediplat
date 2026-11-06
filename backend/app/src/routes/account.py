@@ -148,12 +148,8 @@ def get_authenticated_profile(
     db: Session = Depends(get_db)
 ):
     """A secure private endpoint. Only viewable if a valid httpOnly cookie is present."""
-    user_info = db.query(models.UserInfo)\
-        .join(models.User, models.UserInfo.user_id == models.User.id)\
-        .filter(models.User.username == current_user)\
-        .first()
-        
-    return {
-        "username": current_user, 
-        "first_name": user_info.first_name if user_info else "User"
-    }
+    user = db.query(models.User).filter(models.User.username == current_user).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+
+    return user.profile()

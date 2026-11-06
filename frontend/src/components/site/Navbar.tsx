@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Menu, X } from 'lucide-react';
 import { API_BASE_URL } from '../../apiConfig';
 import { SHOW_DASHBOARDS } from '../../featureFlags';
+import { usePostHog } from '@posthog/react';
 
 interface NavbarProps {
     user: { username: string; first_name: string } | null;
@@ -12,6 +13,7 @@ interface NavbarProps {
 
 function Navbar({ user }: NavbarProps) {
     const { t, i18n } = useTranslation();
+    const posthog = usePostHog();
     const [menuOpen, setMenuOpen] = useState(false);
     const closeMenu = () => setMenuOpen(false);
 
@@ -24,6 +26,9 @@ function Navbar({ user }: NavbarProps) {
 
             if (response.ok) {
                 // Refresh the page or redirect to clear any lingering memory states
+                // Capture before reset, or the event is credited to a fresh anonymous visitor
+                posthog?.capture('logout');
+                posthog?.reset();
                 window.location.href = '/';
             } else {
                 console.error('Logout request rejected by server.');
@@ -46,7 +51,10 @@ function Navbar({ user }: NavbarProps) {
             {(['en', 'es'] as const).map((lng) => (
                 <button
                     key={lng}
-                    onClick={() => i18n.changeLanguage(lng)}
+                    onClick={() => {
+                        i18n.changeLanguage(lng);
+                        posthog?.capture('language-change', { language: lng });
+                    }}
                     className={`px-1.5 py-0.5 rounded ${i18n.language === lng ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     {lng.toUpperCase()}

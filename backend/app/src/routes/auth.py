@@ -53,7 +53,7 @@ def user_login(
         max_age=28800   # Token life expiration in seconds (Matches 8 hours)
     )
 
-    return {"status": "authenticated", "username": clean_username}
+    return {"status": "authenticated", **existing_user.profile()}
 
 
 @router.post("/api/logout")

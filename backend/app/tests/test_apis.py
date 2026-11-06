@@ -346,6 +346,11 @@ def test_api_get_authenticated_profile_success(client: TestClient):
     profile_data = profile_response.json()
     assert profile_data["username"] == "profile_user"
     assert profile_data["first_name"] == "Alex"
+    assert profile_data["role"] == UserRole.PROVIDER.value
+    # Login and /api/me must agree, or the UI changes after a reload
+    login_data = login_response.json()
+    del login_data["status"]
+    assert profile_data == login_data
 
 
 def test_api_get_profile_unauthenticated(client: TestClient):
