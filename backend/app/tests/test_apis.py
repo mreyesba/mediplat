@@ -498,6 +498,68 @@ def test_role_enum_rejects_invalid_value_at_db_level(db: Session):
 
 
 
+# Patient records are staff-only: a patient account (which needs no staff code
+# to create) must not be able to read or write any patient's record.
+PATIENT_RECORD_ROUTES = [
+    (method, path, body) for method, path, body in PROTECTED_ROUTES
+    if path in ("/api/patient_register", "/api/add_entry", "/api/get_entry_count", "/api/get_patients")
+]
+
+
+def _log_in_as(client: TestClient, username: str, role: UserRole):
+    extra = {} if role == UserRole.PATIENT else {"staff_code": STAFF_CODE}
+    assert client.post("/api/register", json=_registration(username, role, **extra)).status_code == 200
+    login = client.post("/api/login", json={"username": username, "password": "password123"})
+    assert login.status_code == 200
+
+
+def _patient_payload(identifier: str) -> dict:
+    return {
+        "first_name": "Maria", "last_name": "Lopez", "dob": "1985-05-05",
+        "sex": "female", "identifier": identifier,
+    }
+
+
+@pytest.mark.parametrize("method,path,body", PATIENT_RECORD_ROUTES)
+def test_patient_record_routes_reject_patient_role(client: TestClient, method, path, body):
+    _log_in_as(client, "curious_patient", UserRole.PATIENT)
+    kwargs = {"json": body} if body is not None else {}
+    response = getattr(client, method)(path, **kwargs)
+    assert response.status_code == 403, (
+        f"{method.upper()} {path} returned {response.status_code} for a patient account, expected 403"
+    )
+
+
+def test_patient_cannot_claim_existing_patient_record(client: TestClient, db: Session):
+    # A provider registers a patient and writes a clinical note
+    _log_in_as(client, "dr_house", UserRole.PROVIDER)
+    assert client.post("/api/patient_register", json=_patient_payload("PX-001")).status_code == 200
+    assert client.post("/api/add_entry", json={"patient_identifier": "PX-001", "info": "confidential note"}).status_code == 200
+    client.post("/api/logout")
+    client.cookies.clear()
+
+    # A patient account tries to link itself to that record and read it
+    _log_in_as(client, "snooping_patient", UserRole.PATIENT)
+    assert client.post("/api/patient_register", json=_patient_payload("PX-001")).status_code == 403
+    assert client.get("/api/get_patients").status_code == 403
+
+    # Nothing was linked to the patient account
+    snooper = db.query(User).filter(User.username == "snooping_patient").one()
+    assert db.query(PatientEntry).filter(PatientEntry.provider_identifier == snooper.id).count() == 0
+
+
+@pytest.mark.parametrize("role", [UserRole.PROVIDER, UserRole.FRONT_DESK, UserRole.CLINIC_ADMIN])
+def test_staff_roles_can_use_patient_records(client: TestClient, role):
+    _log_in_as(client, f"staff_{role.value}", role)
+    assert client.post("/api/patient_register", json=_patient_payload(f"PX-{role.value}")).status_code == 200
+    assert client.post("/api/add_entry", json={"patient_identifier": f"PX-{role.value}", "info": "note"}).status_code == 200
+    assert client.get("/api/get_entry_count").json()["count"] == 2
+
+    patients = client.get("/api/get_patients")
+    assert patients.status_code == 200
+    assert [p["identifier"] for p in patients.json()] == [f"PX-{role.value}"]
+
+
 def register_recovery_user(client: TestClient):
     registration_payload = {
         "username": "forgetful_user",
