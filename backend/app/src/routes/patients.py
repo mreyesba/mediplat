@@ -10,6 +10,38 @@ import models
 
 router = APIRouter()
 
+# Patient records are staff-only. Patient accounts can sign up without a staff
+# code, so they must never reach these endpoints -- otherwise a patient could
+# register an existing patient's identifier and read their full record.
+STAFF_ROLES = {
+    models.UserRole.PROVIDER,
+    models.UserRole.FRONT_DESK,
+    models.UserRole.CLINIC_ADMIN,
+}
+
+def get_staff_user(
+    current_user: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> models.User:
+    """Resolves the logged-in user and rejects anyone who isn't clinic staff."""
+    user = db.query(models.User).filter(models.User.username == current_user).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Internal error."
+        )
+
+    # Fail closed: a missing/unknown role is treated as not staff
+    if user.role not in STAFF_ROLES:
+        logger.info(f"Patient record access denied for non-staff user id={user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access patient records."
+        )
+
+    return user
+
 class PatientRegister(BaseModel):
     first_name: str
     last_name: str
@@ -46,7 +78,7 @@ class PatientWithEntriesResponse(BaseModel):
 @router.post("/api/patient_register")
 def patient_register(
     params: PatientRegister, 
-    current_user: str = Depends(get_current_user), 
+    current_user_obj: models.User = Depends(get_staff_user),
     db: Session = Depends(get_db)
 ):
     logger.info("Patient register.")
@@ -69,16 +101,6 @@ def patient_register(
         db.flush()
         db.commit()
 
-    current_user_obj = db.query(models.User).filter(
-        (models.User.username == current_user)
-    ).first()
-
-    if not current_user_obj:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal error."
-        )
-    
     current_user_id = current_user_obj.id
 
     existing_entry = db.query(models.PatientEntry).filter(
@@ -102,7 +124,7 @@ def patient_register(
 @router.post("/api/add_entry")
 def add_entry(
     params: AddEntry, 
-    current_user: str = Depends(get_current_user), 
+    current_user_obj: models.User = Depends(get_staff_user),
     db: Session = Depends(get_db)
 ):
     logger.info("Patient register.")
@@ -117,16 +139,6 @@ def add_entry(
             detail="Registration failed."
         )
 
-    current_user_obj = db.query(models.User).filter(
-        (models.User.username == current_user)
-    ).first()
-
-    if not current_user_obj:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal error."
-        )
-    
     current_user_id = current_user_obj.id
 
     new_entry = models.PatientEntry(
@@ -143,24 +155,14 @@ def add_entry(
 
 @router.get("/api/get_entry_count")
 def get_entry_count(
-    current_user: str = Depends(get_current_user), 
+    current_user_obj: models.User = Depends(get_staff_user),
     db: Session = Depends(get_db)
 ):
     logger.info("Get entry count.")
     print("get count")
 
-    current_user_obj = db.query(models.User).filter(
-        (models.User.username == current_user)
-    ).first()
-
-    if not current_user_obj:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal error."
-        )
-    
     current_user_id = current_user_obj.id
-    
+
     entry_count = db.query(models.PatientEntry).filter(
         (models.PatientEntry.provider_identifier == current_user_id)
     ).count()
@@ -171,20 +173,10 @@ def get_entry_count(
 
 @router.get("/api/get_patients", response_model=List[PatientWithEntriesResponse])
 def get_patients(
-    current_user: str = Depends(get_current_user), 
+    current_user_obj: models.User = Depends(get_staff_user),
     db: Session = Depends(get_db)
 ):
     logger.info("Fetching patients and entries for current provider.")
-
-    current_user_obj = db.query(models.User).filter(
-        models.User.username == current_user
-    ).first()
-
-    if not current_user_obj:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Internal error."
-        )
 
     # Query patients belonging to this provider, eagerly loading their entries
     patients = (

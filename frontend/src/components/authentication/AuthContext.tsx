@@ -4,6 +4,7 @@ import { useState,
          type ReactNode } from 'react';
 import { apiFetch, SESSION_EXPIRED_EVENT } from '../../api';
 import { AuthContext, type User } from './useAuth';
+import { usePostHog } from '@posthog/react';
 
 // A 401 here ends the session through apiFetch; a network error just yields
 // null without ending it, so a flaky connection doesn't log anyone out
@@ -13,6 +14,7 @@ const fetchMe = (): Promise<User | null> =>
         .catch(() => null);
 
 function AuthProvider({ children }: { children: ReactNode }) {
+    const posthog = usePostHog();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [sessionExpired, setSessionExpired] = useState(false);
@@ -23,6 +25,11 @@ function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
         });
     }, []);
+
+    useEffect(() => {
+        // Role becomes a person property, so insights can be split by staff type
+        if (user) posthog?.identify(String(user.id), { role: user.role });
+    }, [user, posthog]);
 
     // Read by the expiry listener below, which is registered only once
     const userRef = useRef(user);

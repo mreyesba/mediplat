@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Entry, Patient } from "./types";
 import { CreateEntryForm } from "./CreateEntryForm";
+import { usePostHog } from "@posthog/react";
 
 interface PatientDetailViewProps {
   patient: Patient;
@@ -24,6 +25,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   onRefreshData,
 }) => {
     const { t } = useTranslation();
+    const posthog = usePostHog();
     const [isAddingEntry, setIsAddingEntry] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
     const [entrySearch, setEntrySearch] = useState("");
@@ -72,7 +74,10 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 </div>
             </div>
             <button
-                onClick={() => setIsAddingEntry(true)}
+                onClick={() => {
+                    setIsAddingEntry(true);
+                    posthog?.capture('entries-create-open');
+                }}
                 className="bg-sky-600 hover:bg-sky-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition shrink-0"
             >
                 {t('patients.detail.addEntry')}
@@ -130,7 +135,10 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 <button
                     key={entry.id}
                     type="button"
-                    onClick={() => setSelectedEntry(entry)}
+                    onClick={() => {
+                        setSelectedEntry(entry);
+                        posthog?.capture('entries-view-open');
+                    }}
                     className="w-full text-left bg-white p-4 rounded-xl border shadow-sm hover:border-sky-300 hover:bg-sky-50/40 transition"
                 >
                     <div className="flex justify-between items-center text-xs text-slate-400">

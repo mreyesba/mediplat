@@ -12,11 +12,13 @@
     "test:browser": "vitest --config=vitest.browser.config.ts"
   },
   "dependencies": {
+    "@posthog/react": "^1.11.3",
     "@tailwindcss/vite": "^4.3.2",
     "date-fns": "^4.4.0",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.33.0",
+    "posthog-js": "^1.446.0",
     "react": "^19.2.7",
     "react-big-calendar": "^1.20.0",
     "react-day-picker": "^10.0.1",

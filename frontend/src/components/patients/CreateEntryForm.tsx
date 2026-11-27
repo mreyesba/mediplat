@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../api";
+import { usePostHog } from "@posthog/react";
 import { entryDraftKey } from "../../storageKeys";
 import type { Entry } from "./types";
 import rawTextContentEs from '../../assets/entry_templates/template_es.txt?raw';
@@ -53,6 +54,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
     onCancel,
 }) => {
     const { t, i18n } = useTranslation();
+    const posthog = usePostHog();
     const readOnly = entry !== undefined;
     const draftKey = entryDraftKey(patientIdentifier);
     const [info, setInfo] = useState(() => entry?.info ?? readDraft(draftKey));
@@ -69,6 +71,8 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
     const requestClose = () => {
         if (isSubmitting) return;
         if (!readOnly && info.trim() && !window.confirm(t('patients.entryForm.discardConfirm'))) return;
+        // After the early returns, so a close the user backs out of isn't counted
+        posthog?.capture('entries-form-close', { read_only: readOnly, had_text: !!info.trim() });
         if (!readOnly) writeDraft(draftKey, "");
         onCancel();
     };
@@ -109,14 +113,17 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
 
             if (response.ok) {
                 updateInfo("");
+                posthog?.capture('entries-create-success');
                 onEntryAdded?.();
             } else {
+                posthog?.capture('entries-create-failure', { status: response.status });
             const err = await response.json();
                 setError(err.detail || t('patients.entryForm.addFailed'));
             }
         } catch (err) {
             console.error("Failed to post entry:", err);
             setError(t('patients.entryForm.networkError'));
+            posthog?.capture('entries-create-failure', { reason: 'network' });
         } finally {
             setIsSubmitting(false);
         }
@@ -124,7 +131,14 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
 
     const onAddTemplate = () => {
         updateInfo(templates[i18n.resolvedLanguage ?? "en"] ?? templates.en);
+        posthog?.capture('entries-template-used');
     }
+
+    const onCopyPrevious = () => {
+        if (previousInfo === undefined) return;
+        updateInfo(previousInfo);
+        posthog?.capture('entries-copy-previous-used');
+    };
 
     const navButtonClass =
         "px-3 py-1.5 border rounded-lg text-xs text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent";
@@ -195,7 +209,7 @@ export const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
                         {previousInfo !== undefined && (
                             <button
                                 type="button"
-                                onClick={() => updateInfo(previousInfo)}
+                                onClick={onCopyPrevious}
                                 disabled={info !== ""}
                                 className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                             >

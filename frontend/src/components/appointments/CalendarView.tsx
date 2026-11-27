@@ -6,6 +6,7 @@ import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { Plus, Calendar as CalendarIcon, AlertCircle, Loader2, Clock, Trash2 } from "lucide-react";
 import { apiFetch } from "../../api";
+import { usePostHog } from "@posthog/react";
 import "./CalendarView.css";
 
 const locales = { "en-US": enUS, es };
@@ -120,6 +121,7 @@ interface CalendarEvent {
 export function CalendarView() {
     const { t, i18n } = useTranslation();
     const culture = i18n.language.startsWith("es") ? "es" : "en-US";
+    const posthog = usePostHog();
     const calendarMessages = {
         today: t("appointments.calendar.today"),
         previous: t("appointments.calendar.back"),
@@ -208,6 +210,7 @@ export function CalendarView() {
         setErrorMessage(null);
         populateFormWithDates(start, end);
         setIsModalOpen(true);
+        posthog?.capture('appointments-create-event-open-slot');
     };
 
     const handleSelectEvent = (event: CalendarEvent) => {
@@ -216,6 +219,7 @@ export function CalendarView() {
         setErrorMessage(null);
         populateFormWithDates(event.start, event.end);
         setIsModalOpen(true);
+        posthog?.capture('appointments-select-event-open');
     };
 
     // Quick preset button handler
@@ -223,6 +227,7 @@ export function CalendarView() {
         const startObj = combineDateAndTime(eventDate, startTime);
         const endObj = new Date(startObj.getTime() + durationMinutes * 60 * 1000);
         setEndTime(formatTimeForInput(endObj));
+        posthog?.capture('appointments-preset-time');
     };
 
     const handleSaveEventSubmit = async (e: React.FormEvent) => {
@@ -272,11 +277,13 @@ export function CalendarView() {
 
                 setIsSubmitting(false);
                 closeModal();
+                posthog?.capture('appointments-update-event-success');
             } catch (err: any) {
                 // Rollback state on error
                 setEvents(previousEvents);
                 setErrorMessage(err.message || t('appointments.networkError'));
                 setIsSubmitting(false);
+                posthog?.capture('appointments-update-event-failure');
             }
         } else {
             // Create temporary ID for instant optimistic rendering
@@ -318,11 +325,13 @@ export function CalendarView() {
 
                 setIsSubmitting(false);
                 closeModal();
+                posthog?.capture('appointments-create-event-success');
             } catch (err: any) {
                 // Rollback state on error
                 setEvents(previousEvents);
                 setErrorMessage(err.message || t('appointments.networkError'));
                 setIsSubmitting(false);
+                posthog?.capture('appointments-create-event-failure');
             }
         }
     };
@@ -350,12 +359,19 @@ export function CalendarView() {
 
             setIsDeleting(false);
             closeModal();
+            posthog?.capture('appointments-delete-event-success');
         } catch (err: any) {
             // Rollback state on error
             setEvents(previousEvents);
             setErrorMessage(err.message || t('appointments.networkError'));
             setIsDeleting(false);
+            posthog?.capture('appointments-delete-event-failure');
         }
+    };
+
+    const handleCancel = () => {
+        closeModal();
+        posthog?.capture('appointments-event-close');
     };
 
     return (
@@ -374,6 +390,7 @@ export function CalendarView() {
             const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
             populateFormWithDates(now, oneHourLater);
             setIsModalOpen(true);
+            posthog?.capture('appointments-create-event-open');
             }}
             className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-800 transition-colors"
         >
@@ -535,7 +552,7 @@ export function CalendarView() {
                 <button
                     type="button"
                     disabled={isBusy}
-                    onClick={closeModal}
+                    onClick={handleCancel}
                     className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-lg disabled:opacity-50"
                 >
                     {t('appointments.cancel')}

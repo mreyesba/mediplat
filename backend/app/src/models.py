@@ -34,6 +34,15 @@ class User(Base):
             return self.role == role_name
         return self.role.value == role_name or self.role == role_name
 
+    def profile(self) -> dict:
+        """What the frontend knows about the logged-in user; shared by /api/login and /api/me."""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "first_name": self.staff_info.first_name if self.staff_info else "User",
+            "role": self.role.value,
+        }
+
 class UserInfo(Base):
     __tablename__ = "user_info"
 

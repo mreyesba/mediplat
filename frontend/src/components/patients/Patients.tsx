@@ -7,6 +7,7 @@ import type { Patient } from "./types";
 import { CreatePatientForm } from "./CreatePatientForm";
 import { PatientDetailView } from "./PatientDetailView";
 import { apiFetch } from "../../api";
+import { usePostHog } from "@posthog/react";
 
 const lastEntryDate = (patient: Patient) =>
     patient.entries.reduce<Date | null>((latest, entry) => {
@@ -17,6 +18,7 @@ const lastEntryDate = (patient: Patient) =>
 function Patients() {
     const { t, i18n } = useTranslation();
     const dateLocale = i18n.resolvedLanguage === "es" ? es : enUS;
+    const posthog = usePostHog();
     const [patients, setPatients] = useState<Patient[]>([]);
     const [selectedIdentifier, setSelectedIdentifier] = useState<string | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -29,6 +31,7 @@ function Patients() {
     const startCreating = () => {
         setIsCreating(true);
         setShowListOnMobile(false);
+        posthog?.capture('patients-create-open');
     };
 
     const fetchPatients = async () => {
@@ -52,6 +55,7 @@ function Patients() {
             console.error("Patients retrieval failed:", error);
             setPatients([]);
             setErrorMessage(t('patients.fetchFailed'));
+            posthog?.capture('patients-fetch-failure');
         } finally {
             setIsLoading(false);
         }
@@ -159,6 +163,8 @@ function Patients() {
                         setSelectedIdentifier(patient.identifier);
                         setIsCreating(false);
                         setShowListOnMobile(false);
+                        // No identifier: it's patient data
+                        posthog?.capture('patients-select');
                     }}
                     className={`w-full text-left p-4 transition flex flex-col gap-1 ${
                         isSelected ? "bg-sky-50 border-l-4 border-sky-600" : "hover:bg-slate-50"

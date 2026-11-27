@@ -1,6 +1,7 @@
 import React, { useState, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../api";
+import { usePostHog } from "@posthog/react";
 
 interface CreatePatientFormProps {
     onSuccess: () => void;
@@ -12,6 +13,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
     onCancel,
 }) => {
     const { t } = useTranslation();
+    const posthog = usePostHog();
     const patientFirstNameId = useId();
     const patientLastNameId = useId();
     const patientDobId = useId();
@@ -47,17 +49,25 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             });
 
             if (response.ok) {
+                posthog?.capture('patients-create-success');
                 onSuccess();
             } else {
+                posthog?.capture('patients-create-failure', { status: response.status });
                 const err = await response.json();
                 setErrorMessage(err.detail || t('patients.form.registrationFailed'));
             }
         } catch (err) {
             console.error("Failed to submit patient:", err);
             setErrorMessage(t('patients.form.networkError'));
+            posthog?.capture('patients-create-failure', { reason: 'network' });
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleCancel = () => {
+        posthog?.capture('patients-create-cancel');
+        onCancel();
     };
 
     return (
@@ -66,7 +76,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             <h2 className="text-xl font-bold text-slate-800">{t('patients.form.title')}</h2>
             <button
                 type="button"
-                onClick={onCancel}
+                onClick={handleCancel}
                 className="text-slate-500 hover:text-slate-700 text-sm font-medium">
                 {t('patients.form.cancel')}
             </button>
@@ -154,7 +164,7 @@ export const CreatePatientForm: React.FC<CreatePatientFormProps> = ({
             <div className="flex gap-2 justify-end mt-4">
                 <button
                     type="button"
-                    onClick={onCancel}
+                    onClick={handleCancel}
                     className="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50">
                     {t('patients.form.cancel')}
                 </button>
